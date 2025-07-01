@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import NowCard from '../components/NowCard';
 import EditableGoalSection from '../components/EditableGoalSection';
 import EditableSchedule from '../components/EditableSchedule';
 import FitnessTimeline from '../components/FitnessTimeline';
+import CareerTimeline from '../components/CareerTimeline';
 import DailyTodos from '../components/DailyTodos';
 import HabitStreakView from '../components/HabitStreakView';
 import QuickNotes from '../components/QuickNotes';
@@ -44,7 +44,7 @@ const defaultSundaySchedule = [
 ];
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'fitness' | 'productivity'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'fitness' | 'career' | 'productivity'>('dashboard');
   const [activeWeekendDay, setActiveWeekendDay] = useState<'saturday' | 'sunday'>('saturday');
 
   return (
@@ -61,7 +61,7 @@ const Index = () => {
             <nav className="flex space-x-0.5 sm:space-x-1">
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   activeTab === 'dashboard'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
@@ -71,7 +71,7 @@ const Index = () => {
               </button>
               <button
                 onClick={() => setActiveTab('productivity')}
-                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   activeTab === 'productivity'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
@@ -80,8 +80,18 @@ const Index = () => {
                 Productivity
               </button>
               <button
+                onClick={() => setActiveTab('career')}
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  activeTab === 'career'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                }`}
+              >
+                Career
+              </button>
+              <button
                 onClick={() => setActiveTab('fitness')}
-                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   activeTab === 'fitness'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
@@ -186,6 +196,8 @@ const Index = () => {
               <WeeklyProgress />
             </div>
           </div>
+        ) : activeTab === 'career' ? (
+          <CareerTimeline />
         ) : (
           <FitnessTimeline />
         )}
