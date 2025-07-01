@@ -5,9 +5,14 @@ import GoalSection from '../components/GoalSection';
 import DailyRoutine from '../components/DailyRoutine';
 import WeekendRoutine from '../components/WeekendRoutine';
 import FitnessTimeline from '../components/FitnessTimeline';
+import DailyTodos from '../components/DailyTodos';
+import HabitTracker from '../components/HabitTracker';
+import QuickNotes from '../components/QuickNotes';
+import WeeklyProgress from '../components/WeeklyProgress';
+import FocusTimer from '../components/FocusTimer';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'fitness'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'fitness' | 'productivity'>('dashboard');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95">
@@ -30,6 +35,16 @@ const Index = () => {
                 }`}
               >
                 Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('productivity')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === 'productivity'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                }`}
+              >
+                Productivity
               </button>
               <button
                 onClick={() => setActiveTab('fitness')}
@@ -75,6 +90,23 @@ const Index = () => {
                   "My 12 LPA job already exists. I'm just catching up to it."
                 </p>
               </blockquote>
+            </div>
+          </div>
+        ) : activeTab === 'productivity' ? (
+          <div className="space-y-8">
+            {/* Focus Timer */}
+            <FocusTimer />
+
+            {/* Daily Tasks and Habits */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              <DailyTodos />
+              <HabitTracker />
+            </div>
+
+            {/* Quick Notes and Weekly Progress */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              <QuickNotes />
+              <WeeklyProgress />
             </div>
           </div>
         ) : (
