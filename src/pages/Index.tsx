@@ -51,17 +51,17 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl">⚡</div>
-              <h1 className="text-xl font-bold gradient-text">LifeOS Dashboard</h1>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="text-xl sm:text-2xl">⚡</div>
+              <h1 className="text-lg sm:text-xl font-bold gradient-text">LifeOS Dashboard</h1>
             </div>
             
-            <nav className="flex space-x-1">
+            <nav className="flex space-x-0.5 sm:space-x-1">
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   activeTab === 'dashboard'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
@@ -71,7 +71,7 @@ const Index = () => {
               </button>
               <button
                 onClick={() => setActiveTab('productivity')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   activeTab === 'productivity'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
@@ -81,22 +81,22 @@ const Index = () => {
               </button>
               <button
                 onClick={() => setActiveTab('fitness')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   activeTab === 'fitness'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
                 }`}
               >
-                Fitness Timeline
+                Fitness
               </button>
             </nav>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         {activeTab === 'dashboard' ? (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Current Task Card */}
             <NowCard />
 
@@ -104,7 +104,7 @@ const Index = () => {
             <EditableGoalSection />
 
             {/* Schedule Section */}
-            <div className="grid lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               <EditableSchedule 
                 title="Daily Schedule (Mon-Fri)"
                 scheduleKey="weekday"
@@ -115,7 +115,7 @@ const Index = () => {
                 <div className="flex bg-secondary rounded-lg p-1">
                   <button
                     onClick={() => setActiveWeekendDay('saturday')}
-                    className={`flex-1 px-4 py-2 rounded-md text-sm transition-all ${
+                    className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm transition-all ${
                       activeWeekendDay === 'saturday' 
                         ? 'bg-primary text-primary-foreground' 
                         : 'text-muted-foreground hover:text-foreground'
@@ -125,7 +125,7 @@ const Index = () => {
                   </button>
                   <button
                     onClick={() => setActiveWeekendDay('sunday')}
-                    className={`flex-1 px-4 py-2 rounded-md text-sm transition-all ${
+                    className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm transition-all ${
                       activeWeekendDay === 'sunday' 
                         ? 'bg-primary text-primary-foreground' 
                         : 'text-muted-foreground hover:text-foreground'
@@ -154,9 +154,9 @@ const Index = () => {
             </div>
 
             {/* Daily Affirmation */}
-            <div className="glass-card p-8 rounded-xl text-center">
-              <h2 className="text-2xl font-bold gradient-text mb-4">Daily Affirmation</h2>
-              <blockquote className="text-lg leading-relaxed space-y-2">
+            <div className="glass-card p-6 sm:p-8 rounded-xl text-center">
+              <h2 className="text-xl sm:text-2xl font-bold gradient-text mb-4">Daily Affirmation</h2>
+              <blockquote className="text-sm sm:text-lg leading-relaxed space-y-2">
                 <p className="italic text-foreground">
                   "I am a high-performing operator. I show up even when I'm tired."
                 </p>
@@ -170,18 +170,18 @@ const Index = () => {
             </div>
           </div>
         ) : activeTab === 'productivity' ? (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Focus Timer */}
             <FocusTimer />
 
             {/* Daily Tasks and Habits */}
-            <div className="grid lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               <DailyTodos />
               <HabitStreakView />
             </div>
 
             {/* Quick Notes and Weekly Progress */}
-            <div className="grid lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               <QuickNotes />
               <WeeklyProgress />
             </div>
@@ -192,9 +192,9 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center text-sm text-muted-foreground">
+      <footer className="border-t border-border/50 mt-12 sm:mt-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+          <div className="text-center text-xs sm:text-sm text-muted-foreground">
             <p>LifeOS Dashboard • Stay focused, stay consistent, become unstoppable</p>
           </div>
         </div>

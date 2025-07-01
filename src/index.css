@@ -65,4 +65,25 @@
   .current-task {
     @apply ring-2 ring-primary/50 bg-primary/10 border-primary/30;
   }
+
+  /* Mobile-specific improvements */
+  @media (max-width: 640px) {
+    .glass-card {
+      @apply px-3 py-4;
+    }
+  }
+
+  /* Custom grid for habit streaks on mobile */
+  .grid-cols-20 {
+    grid-template-columns: repeat(20, minmax(0, 1fr));
+  }
+
+  .grid-cols-25 {
+    grid-template-columns: repeat(25, minmax(0, 1fr));
+  }
+
+  /* Animate pulse for icons */
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }
