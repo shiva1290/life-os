@@ -1,18 +1,51 @@
 
 import React, { useState } from 'react';
 import NowCard from '../components/NowCard';
-import GoalSection from '../components/GoalSection';
-import DailyRoutine from '../components/DailyRoutine';
-import WeekendRoutine from '../components/WeekendRoutine';
+import EditableGoalSection from '../components/EditableGoalSection';
+import EditableSchedule from '../components/EditableSchedule';
 import FitnessTimeline from '../components/FitnessTimeline';
 import DailyTodos from '../components/DailyTodos';
-import HabitTracker from '../components/HabitTracker';
+import HabitStreakView from '../components/HabitStreakView';
 import QuickNotes from '../components/QuickNotes';
 import WeeklyProgress from '../components/WeeklyProgress';
 import FocusTimer from '../components/FocusTimer';
 
+// Default schedules
+const defaultWeekdaySchedule = [
+  { id: '1', time: '6:00', task: 'Wake + Water + Prayer', emoji: '🌅', type: 'routine' as const },
+  { id: '2', time: '6:15', task: 'Gym Time - Push/Pull/Legs', emoji: '🏋️', type: 'gym' as const },
+  { id: '3', time: '7:15', task: 'Breakfast + Protein', emoji: '🥣', type: 'routine' as const },
+  { id: '4', time: '8:30', task: 'College', emoji: '🎓', type: 'college' as const },
+  { id: '5', time: '16:30', task: 'College Ends', emoji: '🎓', type: 'college' as const },
+  { id: '6', time: '17:00', task: 'Nap/Reset', emoji: '😴', type: 'break' as const },
+  { id: '7', time: '17:30', task: 'TUF DSA Concept Video', emoji: '📚', type: 'study' as const },
+  { id: '8', time: '18:15', task: 'Striver Sheet (2-3 Questions)', emoji: '💻', type: 'study' as const },
+  { id: '9', time: '19:15', task: 'Dinner', emoji: '🍽️', type: 'routine' as const },
+  { id: '10', time: '20:00', task: 'DSA Revision OR Dev (Light)', emoji: '⚡', type: 'study' as const },
+  { id: '11', time: '21:00', task: 'Wind Down: Video or Reflect', emoji: '🧘', type: 'break' as const },
+  { id: '12', time: '22:15', task: 'Prayer + Prep Next Day', emoji: '🙏', type: 'routine' as const },
+  { id: '13', time: '22:30', task: 'Sleep', emoji: '😴', type: 'routine' as const },
+];
+
+const defaultSaturdaySchedule = [
+  { id: 's1', time: '9:00', task: 'DSA Mock Contest', emoji: '⚔️', type: 'study' as const },
+  { id: 's2', time: '10:00', task: 'Cohort 3.0 Project Build', emoji: '🛠️', type: 'study' as const },
+  { id: 's3', time: '14:00', task: 'Push + Polish + Host', emoji: '🚀', type: 'study' as const },
+  { id: 's4', time: '16:00', task: 'Rest/Social', emoji: '😊', type: 'break' as const },
+  { id: 's5', time: '18:00', task: 'DSA Revise', emoji: '📖', type: 'study' as const },
+  { id: 's6', time: '20:00', task: 'System Design Video', emoji: '🏗️', type: 'study' as const },
+];
+
+const defaultSundaySchedule = [
+  { id: 'sun1', time: '9:00', task: 'Striver Sheet Weekly Review', emoji: '📊', type: 'study' as const },
+  { id: 'sun2', time: '11:00', task: 'Resume/GitHub/LinkedIn Updates', emoji: '📝', type: 'study' as const },
+  { id: 'sun3', time: '14:00', task: 'Read/Reflect', emoji: '📚', type: 'break' as const },
+  { id: 'sun4', time: '17:00', task: 'Weekly Plan Reset', emoji: '🔄', type: 'routine' as const },
+];
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'fitness' | 'productivity'>('dashboard');
+  const [activeWeekendDay, setActiveWeekendDay] = useState<'saturday' | 'sunday'>('saturday');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95">
@@ -68,12 +101,56 @@ const Index = () => {
             <NowCard />
 
             {/* Life Goals Section */}
-            <GoalSection />
+            <EditableGoalSection />
 
             {/* Schedule Section */}
             <div className="grid lg:grid-cols-2 gap-8">
-              <DailyRoutine />
-              <WeekendRoutine />
+              <EditableSchedule 
+                title="Daily Schedule (Mon-Fri)"
+                scheduleKey="weekday"
+                defaultSchedule={defaultWeekdaySchedule}
+              />
+              
+              <div className="space-y-4">
+                <div className="flex bg-secondary rounded-lg p-1">
+                  <button
+                    onClick={() => setActiveWeekendDay('saturday')}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm transition-all ${
+                      activeWeekendDay === 'saturday' 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Saturday
+                  </button>
+                  <button
+                    onClick={() => setActiveWeekendDay('sunday')}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm transition-all ${
+                      activeWeekendDay === 'sunday' 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Sunday
+                  </button>
+                </div>
+                
+                {activeWeekendDay === 'saturday' ? (
+                  <EditableSchedule 
+                    title="Saturday Schedule"
+                    scheduleKey="saturday"
+                    defaultSchedule={defaultSaturdaySchedule}
+                    isWeekend={true}
+                  />
+                ) : (
+                  <EditableSchedule 
+                    title="Sunday Schedule"
+                    scheduleKey="sunday"
+                    defaultSchedule={defaultSundaySchedule}
+                    isWeekend={true}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Daily Affirmation */}
@@ -100,7 +177,7 @@ const Index = () => {
             {/* Daily Tasks and Habits */}
             <div className="grid lg:grid-cols-2 gap-8">
               <DailyTodos />
-              <HabitTracker />
+              <HabitStreakView />
             </div>
 
             {/* Quick Notes and Weekly Progress */}
