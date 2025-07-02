@@ -2,8 +2,8 @@
 import React from 'react';
 import Navigation from "@/components/Navigation";
 import NowCard from "@/components/NowCard";
-import LiveDailyTimeline from "@/components/LiveDailyTimeline";
-import DSAMasterPanel from "@/components/DSAMasterPanel";
+import EditableDailyTimeline from "@/components/EditableDailyTimeline";
+import SimplifiedDSAPanel from "@/components/SimplifiedDSAPanel";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import UserProfile from "@/components/UserProfile";
 
@@ -57,14 +57,14 @@ const Dashboard = () => {
             {/* Live Timeline */}
             <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <div className="glass-card rounded-3xl card-hover">
-                <LiveDailyTimeline />
+                <EditableDailyTimeline />
               </div>
             </div>
             
             {/* DSA Progress */}
             <div className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
               <div className="glass-card rounded-3xl card-hover">
-                <DSAMasterPanel />
+                <SimplifiedDSAPanel />
               </div>
             </div>
           </div>

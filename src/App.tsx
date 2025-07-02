@@ -36,7 +36,7 @@ const App = () => (
             } />
             <Route path="/timelines" element={
               <ProtectedRoute>
-                <Tools />
+                <Timelines />
               </ProtectedRoute>
             } />
             <Route path="/habits" element={

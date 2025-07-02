@@ -5,9 +5,7 @@ import HabitTracker from "@/components/HabitTracker";
 import DailyTodos from "@/components/DailyTodos";
 import QuickNotes from "@/components/QuickNotes";
 import GymCheckIn from "@/components/GymCheckIn";
-import FocusTimer from "@/components/FocusTimer";
-import GitHubStyleStreaks from "@/components/GitHubStyleStreaks";
-import WeeklyOperatorGrid from "@/components/WeeklyOperatorGrid";
+import CompletionGrid from "@/components/CompletionGrid";
 
 const Tools = () => {
   return (
@@ -30,52 +28,42 @@ const Tools = () => {
             </p>
           </div>
 
-          {/* Streaks & Weekly Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Completion Grid */}
+          <div className="mb-12">
             <div className="animate-slide-up">
               <div className="glass-card rounded-3xl card-hover">
-                <GitHubStyleStreaks />
-              </div>
-            </div>
-            <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <div className="glass-card rounded-3xl card-hover">
-                <WeeklyOperatorGrid />
+                <CompletionGrid />
               </div>
             </div>
           </div>
 
           {/* Tools Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
               <div className="glass-card rounded-3xl card-hover h-full">
                 <HabitTracker />
               </div>
             </div>
-            <div className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <div className="glass-card rounded-3xl card-hover h-full">
                 <DailyTodos />
               </div>
             </div>
-            <div className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
+            <div className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
               <div className="glass-card rounded-3xl card-hover h-full">
                 <GymCheckIn />
               </div>
             </div>
-            <div className="animate-slide-up" style={{ animationDelay: '0.5s' }}>
-              <div className="glass-card rounded-3xl card-hover h-full">
-                <FocusTimer />
-              </div>
-            </div>
           </div>
 
-          {/* Notes & Stats Section */}
+          {/* Notes Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+            <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '0.4s' }}>
               <div className="glass-card-intense rounded-3xl card-hover">
                 <QuickNotes />
               </div>
             </div>
-            <div className="animate-slide-up" style={{ animationDelay: '0.7s' }}>
+            <div className="animate-slide-up" style={{ animationDelay: '0.5s' }}>
               <div className="glass-card rounded-3xl p-8 card-hover">
                 <h3 className="text-2xl font-bold gradient-text mb-6">🧠 Quick Stats</h3>
                 <div className="grid grid-cols-1 gap-6">
