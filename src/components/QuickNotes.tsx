@@ -1,136 +1,83 @@
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
-
-interface Note {
-  id: string;
-  text: string;
-  timestamp: string;
-  category: 'idea' | 'reminder' | 'learning' | 'reflection';
-}
+import React, { useState } from 'react';
+import { StickyNote, Plus, Archive, Calendar } from 'lucide-react';
+import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 
 const QuickNotes = () => {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const { notes, addNote, loading } = useSupabaseSync();
   const [newNote, setNewNote] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<Note['category']>('idea');
+  const [showAll, setShowAll] = useState(false);
 
-  // Load notes from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('quick-notes');
-    if (saved) {
-      setNotes(JSON.parse(saved));
-    }
-  }, []);
-
-  // Save notes to localStorage
-  useEffect(() => {
-    localStorage.setItem('quick-notes', JSON.stringify(notes));
-  }, [notes]);
-
-  const addNote = () => {
+  const handleAddNote = async () => {
     if (!newNote.trim()) return;
     
-    const note: Note = {
-      id: Date.now().toString(),
-      text: newNote.trim(),
-      timestamp: new Date().toLocaleString(),
-      category: selectedCategory,
-    };
-    
-    setNotes([note, ...notes]);
+    await addNote(newNote.trim());
     setNewNote('');
   };
 
-  const deleteNote = (id: string) => {
-    setNotes(notes.filter(note => note.id !== id));
-  };
-
-  const getCategoryEmoji = (category: Note['category']) => {
-    switch (category) {
-      case 'idea': return '💡';
-      case 'reminder': return '⏰';
-      case 'learning': return '📚';
-      case 'reflection': return '🤔';
-    }
-  };
-
-  const getCategoryColor = (category: Note['category']) => {
-    switch (category) {
-      case 'idea': return 'border-l-yellow-500 bg-yellow-500/10';
-      case 'reminder': return 'border-l-red-500 bg-red-500/10';
-      case 'learning': return 'border-l-blue-500 bg-blue-500/10';
-      case 'reflection': return 'border-l-purple-500 bg-purple-500/10';
-    }
-  };
+  if (loading) {
+    return (
+      <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="glass-card p-6 rounded-xl">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold gradient-text">Quick Notes</h2>
-        <div className="text-3xl animate-pulse-slow">📝</div>
+    <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-2xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20">
+            <StickyNote className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="text-xl font-bold text-white">Quick Notes</h3>
+        </div>
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+        >
+          <Archive className="w-5 h-5 text-white" />
+        </button>
       </div>
-
-      {/* Add New Note */}
-      <div className="mb-6 space-y-3">
+      
+      <div className="mb-4">
         <div className="flex gap-2">
-          <textarea
+          <input
+            type="text"
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Capture your thoughts, ideas, or reminders..."
-            className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-            rows={2}
-            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), addNote())}
+            placeholder="Jot down a quick note..."
+            className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 backdrop-blur-sm"
+            onKeyPress={(e) => e.key === 'Enter' && handleAddNote()}
           />
           <button
-            onClick={addNote}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 self-start"
+            onClick={handleAddNote}
+            className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-2xl hover:from-yellow-600 hover:to-orange-600 transition-all flex items-center gap-2 shadow-lg"
           >
             <Plus size={16} />
             Add
           </button>
         </div>
-        
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value as Note['category'])}
-          className="px-3 py-1 bg-secondary border border-border rounded text-sm text-foreground"
-        >
-          <option value="idea">💡 Idea</option>
-          <option value="reminder">⏰ Reminder</option>
-          <option value="learning">📚 Learning</option>
-          <option value="reflection">🤔 Reflection</option>
-        </select>
       </div>
-
-      {/* Notes List */}
-      <div className="space-y-3 max-h-80 overflow-y-auto">
+      
+      <div className="space-y-3 max-h-64 overflow-y-auto">
         {notes.map((note) => (
           <div
             key={note.id}
-            className={`p-4 rounded-lg border-l-4 transition-all ${getCategoryColor(note.category)}`}
+            className="p-3 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 flex-1">
-                <div className="text-xl">{getCategoryEmoji(note.category)}</div>
-                <div className="flex-1">
-                  <p className="text-foreground whitespace-pre-wrap">{note.text}</p>
-                  <p className="text-xs text-muted-foreground mt-2">{note.timestamp}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => deleteNote(note.id)}
-                className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
-              >
-                <Trash2 size={14} />
-              </button>
+            <p className="text-white text-sm">{note.content}</p>
+            <div className="flex items-center gap-1 mt-2 text-white/50 text-xs">
+              <Calendar size={12} />
+              {new Date(note.created_at).toLocaleDateString()}
             </div>
           </div>
         ))}
         
         {notes.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            <div className="text-4xl mb-2">💭</div>
-            <p>No notes yet. Start capturing your thoughts!</p>
+          <div className="text-center py-8 text-white/60">
+            <div className="text-4xl mb-2">📝</div>
+            <p>No notes yet. Add your first thought above!</p>
           </div>
         )}
       </div>

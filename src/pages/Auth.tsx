@@ -1,0 +1,169 @@
+
+import React, { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, User, Sparkles } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+const Auth = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let result;
+      if (isLogin) {
+        result = await signIn(email, password);
+      } else {
+        if (!fullName) {
+          toast({
+            title: "Error",
+            description: "Please enter your full name",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        result = await signUp(email, password, fullName);
+      }
+
+      if (result.error) {
+        toast({
+          title: "Authentication Error",
+          description: result.error.message || "An error occurred",
+          variant: "destructive",
+        });
+      } else {
+        if (isLogin) {
+          toast({
+            title: "Welcome back!",
+            description: "Successfully signed in",
+          });
+          navigate('/');
+        } else {
+          toast({
+            title: "Account created!",
+            description: "Please check your email to verify your account",
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
+      
+      <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">LifeOS</h1>
+          <p className="text-white/70">
+            {isLogin ? 'Welcome back to your dashboard' : 'Create your account to get started'}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {!isLogin && (
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50 backdrop-blur-sm"
+              />
+            </div>
+          )}
+
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50 backdrop-blur-sm"
+            />
+          </div>
+
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50 backdrop-blur-sm"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl font-semibold hover:from-purple-600 hover:to-blue-600 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              isLogin ? 'Sign In' : 'Create Account'
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            {isLogin 
+              ? "Don't have an account? Sign up" 
+              : "Already have an account? Sign in"
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Auth;

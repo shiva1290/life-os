@@ -1,72 +1,53 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Dumbbell, Check } from 'lucide-react';
+import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 
 const GymCheckIn = () => {
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [checkInTime, setCheckInTime] = useState('');
+  const { gymCheckedIn, toggleGymCheckin, loading } = useSupabaseSync();
 
-  useEffect(() => {
-    const today = new Date().toDateString();
-    const gymData = JSON.parse(localStorage.getItem('gym-checkins') || '{}');
-    
-    if (gymData[today]) {
-      setIsCheckedIn(true);
-      setCheckInTime(gymData[today]);
-    }
-  }, []);
-
-  const toggleCheckIn = () => {
-    const today = new Date().toDateString();
-    const gymData = JSON.parse(localStorage.getItem('gym-checkins') || '{}');
-    
-    if (isCheckedIn) {
-      delete gymData[today];
-      setIsCheckedIn(false);
-      setCheckInTime('');
-    } else {
-      const time = new Date().toLocaleTimeString();
-      gymData[today] = time;
-      setIsCheckedIn(true);
-      setCheckInTime(time);
-    }
-    
-    localStorage.setItem('gym-checkins', JSON.stringify(gymData));
-  };
+  if (loading) {
+    return (
+      <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="backdrop-blur-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border border-white/20 rounded-3xl shadow-2xl p-6">
+    <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl p-6">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-3 rounded-2xl bg-gradient-to-br from-red-500/20 to-orange-500/20">
+        <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-500/20">
           <Dumbbell className="w-6 h-6 text-white" />
         </div>
         <h3 className="text-xl font-bold text-white">Gym Check-in</h3>
       </div>
       
+      <div className="text-center mb-4">
+        <div className={`text-4xl mb-2 ${gymCheckedIn ? 'animate-bounce' : ''}`}>
+          {gymCheckedIn ? '💪' : '🏋️‍♂️'}
+        </div>
+        <p className="text-white/70 text-sm">
+          {gymCheckedIn ? 'Great job! You crushed it today!' : 'Ready to crush your workout?'}
+        </p>
+      </div>
+      
       <button
-        onClick={toggleCheckIn}
-        className={`w-full p-4 rounded-2xl border-2 transition-all ${
-          isCheckedIn
-            ? 'bg-green-500/20 border-green-500/50 text-green-300'
-            : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
+        onClick={toggleGymCheckin}
+        className={`w-full p-3 rounded-2xl font-medium transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 ${
+          gymCheckedIn 
+            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600' 
+            : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600'
         }`}
       >
-        <div className="flex items-center justify-center gap-3">
-          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-            isCheckedIn ? 'bg-green-500 border-green-500' : 'border-white/50'
-          }`}>
-            {isCheckedIn && <Check size={16} className="text-white" />}
-          </div>
-          <span className="font-medium">
-            {isCheckedIn ? 'Gym Done!' : 'Mark Gym Complete'}
-          </span>
-        </div>
+        {gymCheckedIn && <Check className="w-5 h-5" />}
+        {gymCheckedIn ? 'Checked In!' : 'Check In'}
       </button>
       
-      {isCheckedIn && (
-        <div className="mt-3 text-center text-sm text-green-300">
-          ✅ Completed at {checkInTime}
-        </div>
+      {gymCheckedIn && (
+        <p className="text-center text-white/50 text-xs mt-2">
+          Checked in at {new Date().toLocaleTimeString()}
+        </p>
       )}
     </div>
   );
