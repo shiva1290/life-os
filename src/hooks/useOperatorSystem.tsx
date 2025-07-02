@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
+import { parseTimeSlot, getCurrentTimeInMinutes, isTimeInRange } from '@/utils/timeHelpers';
 
 interface DailyBlock {
   id: string;

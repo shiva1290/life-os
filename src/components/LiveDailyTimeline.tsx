@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Clock, Plus, AlertCircle, CheckCircle } from 'lucide-react';
 import { useOperatorSystem } from '@/hooks/useOperatorSystem';
@@ -270,7 +271,7 @@ const LiveDailyTimeline = () => {
                     isMissed={isMissed}
                     isEditing={isEditing}
                     editData={editData}
-                    onEdit={handleEdit}
+                    onEdit={handleEditBlock}
                     onSave={handleSaveEdit}
                     onCancel={handleCancelEdit}
                     onComplete={handleCompleteBlock}
