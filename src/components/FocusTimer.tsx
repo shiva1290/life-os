@@ -1,347 +1,227 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Coffee, Settings, Plus, Minus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, RotateCcw, Target } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from './ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { useToast } from './ui/use-toast';
 
-interface TimerSettings {
-  focusTime: number;
-  shortBreak: number;
-  longBreak: number;
-  sessionsUntilLongBreak: number;
+interface FocusSession {
+  id: string;
+  session_type: string;
+  duration_minutes: number;
+  completed: boolean;
+  created_at: string;
 }
 
 const FocusTimer = () => {
-  const [settings, setSettings] = useState<TimerSettings>({
-    focusTime: 25,
-    shortBreak: 5,
-    longBreak: 15,
-    sessionsUntilLongBreak: 4
-  });
-  const [timeLeft, setTimeLeft] = useState(settings.focusTime * 60);
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [isRunning, setIsRunning] = useState(false);
-  const [isBreak, setIsBreak] = useState(false);
-  const [isLongBreak, setIsLongBreak] = useState(false);
-  const [sessions, setSessions] = useState(0);
-  const [showSettings, setShowSettings] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
+  const [selectedDuration, setSelectedDuration] = useState('25');
+  const [sessionType, setSessionType] = useState('study');
+  const [sessions, setSessions] = useState<FocusSession[]>([]);
 
-  // Load settings from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('focus-timer-settings');
-    if (saved) {
-      const parsedSettings = JSON.parse(saved);
-      setSettings(parsedSettings);
-      setTimeLeft(parsedSettings.focusTime * 60);
+    if (user) {
+      fetchTodaysSessions();
     }
-  }, []);
-
-  // Save settings to localStorage
-  useEffect(() => {
-    localStorage.setItem('focus-timer-settings', JSON.stringify(settings));
-  }, [settings]);
+  }, [user]);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout;
+
     if (isRunning && timeLeft > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
+      interval = setInterval(() => {
+        setTimeLeft((time) => time - 1);
       }, 1000);
     } else if (timeLeft === 0) {
-      // Timer finished
       setIsRunning(false);
-      if (!isBreak) {
-        const newSessions = sessions + 1;
-        setSessions(newSessions);
-        
-        // Check if it's time for long break
-        if (newSessions % settings.sessionsUntilLongBreak === 0) {
-          setIsLongBreak(true);
-          setIsBreak(true);
-          setTimeLeft(settings.longBreak * 60);
-        } else {
-          setIsBreak(true);
-          setTimeLeft(settings.shortBreak * 60);
-        }
-      } else {
-        // Break finished
-        setIsBreak(false);
-        setIsLongBreak(false);
-        setTimeLeft(settings.focusTime * 60);
-      }
+      handleSessionComplete();
     }
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isRunning, timeLeft, isBreak, sessions, settings]);
+    return () => clearInterval(interval);
+  }, [isRunning, timeLeft]);
 
-  const toggleTimer = () => {
-    setIsRunning(!isRunning);
+  const fetchTodaysSessions = async () => {
+    if (!user) return;
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('focus_sessions')
+        .select('*')
+        .gte('created_at', today)
+        .lt('created_at', new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSessions(data || []);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    }
+  };
+
+  const handleSessionComplete = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('focus_sessions')
+        .insert([{
+          user_id: user.id,
+          session_type: sessionType,
+          duration_minutes: parseInt(selectedDuration),
+          completed: true
+        }]);
+
+      if (error) throw error;
+      
+      toast({
+        title: "🎯 Focus session completed!",
+        description: `Great work on your ${sessionType} session!`,
+      });
+      
+      fetchTodaysSessions();
+    } catch (error) {
+      console.error('Error saving session:', error);
+    }
+  };
+
+  const startTimer = () => {
+    setIsRunning(true);
+  };
+
+  const pauseTimer = () => {
+    setIsRunning(false);
   };
 
   const resetTimer = () => {
     setIsRunning(false);
-    if (isBreak) {
-      setTimeLeft(isLongBreak ? settings.longBreak * 60 : settings.shortBreak * 60);
-    } else {
-      setTimeLeft(settings.focusTime * 60);
-    }
-  };
-
-  const startBreak = (isLong = false) => {
-    setIsRunning(false);
-    setIsBreak(true);
-    setIsLongBreak(isLong);
-    setTimeLeft(isLong ? settings.longBreak * 60 : settings.shortBreak * 60);
-  };
-
-  const updateSetting = (key: keyof TimerSettings, value: number) => {
-    if (value < 1) return;
-    setSettings(prev => ({ ...prev, [key]: value }));
-    
-    // Update current timer if not running and matches the changed setting
-    if (!isRunning) {
-      if (key === 'focusTime' && !isBreak) {
-        setTimeLeft(value * 60);
-      } else if (key === 'shortBreak' && isBreak && !isLongBreak) {
-        setTimeLeft(value * 60);
-      } else if (key === 'longBreak' && isBreak && isLongBreak) {
-        setTimeLeft(value * 60);
-      }
-    }
+    setTimeLeft(parseInt(selectedDuration) * 60);
   };
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const getCurrentDuration = () => {
-    if (isBreak) {
-      return isLongBreak ? settings.longBreak * 60 : settings.shortBreak * 60;
+  const getSessionTypeEmoji = (type: string) => {
+    switch (type) {
+      case 'study': return '📚';
+      case 'dsa': return '💻';
+      case 'dev': return '⚡';
+      case 'reading': return '📖';
+      default: return '🎯';
     }
-    return settings.focusTime * 60;
-  };
-
-  const progress = ((getCurrentDuration() - timeLeft) / getCurrentDuration()) * 100;
-
-  const getTimerType = () => {
-    if (isLongBreak) return 'Long Break';
-    if (isBreak) return 'Short Break';
-    return 'Focus Time';
-  };
-
-  const getTimerColor = () => {
-    if (isLongBreak) return 'text-purple-400';
-    if (isBreak) return 'text-orange-400';
-    return 'text-primary';
   };
 
   return (
-    <div className="glass-card p-6 rounded-xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold gradient-text">Focus Timer</h2>
-          <p className="text-sm text-muted-foreground">
-            {getTimerType()} • {sessions} sessions completed
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Settings size={20} />
-          </button>
-          <div className="text-3xl animate-pulse-slow">
-            {isLongBreak ? '🛌' : isBreak ? '☕' : '🎯'}
+    <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl">
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20">
+            <Target className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-white">🎯 Focus Timer</h3>
+            <p className="text-sm text-white/70">Deep work sessions</p>
           </div>
         </div>
-      </div>
 
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="mb-6 p-4 bg-secondary/50 rounded-lg space-y-4">
-          <h3 className="font-semibold text-foreground">Timer Settings</h3>
+        {/* Timer Display */}
+        <div className="text-center mb-6">
+          <div className={`text-6xl font-mono font-bold mb-4 transition-colors duration-300 ${
+            isRunning ? 'text-green-400' : 'text-white'
+          }`}>
+            {formatTime(timeLeft)}
+          </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-muted-foreground">Focus Time (min)</label>
-              <div className="flex items-center gap-2 mt-1">
-                <button
-                  onClick={() => updateSetting('focusTime', settings.focusTime - 1)}
-                  className="p-1 hover:bg-secondary rounded"
-                >
-                  <Minus size={16} />
-                </button>
-                <span className="w-12 text-center">{settings.focusTime}</span>
-                <button
-                  onClick={() => updateSetting('focusTime', settings.focusTime + 1)}
-                  className="p-1 hover:bg-secondary rounded"
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm text-muted-foreground">Short Break (min)</label>
-              <div className="flex items-center gap-2 mt-1">
-                <button
-                  onClick={() => updateSetting('shortBreak', settings.shortBreak - 1)}
-                  className="p-1 hover:bg-secondary rounded"
-                >
-                  <Minus size={16} />
-                </button>
-                <span className="w-12 text-center">{settings.shortBreak}</span>
-                <button
-                  onClick={() => updateSetting('shortBreak', settings.shortBreak + 1)}
-                  className="p-1 hover:bg-secondary rounded"
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm text-muted-foreground">Long Break (min)</label>
-              <div className="flex items-center gap-2 mt-1">
-                <button
-                  onClick={() => updateSetting('longBreak', settings.longBreak - 1)}
-                  className="p-1 hover:bg-secondary rounded"
-                >
-                  <Minus size={16} />
-                </button>
-                <span className="w-12 text-center">{settings.longBreak}</span>
-                <button
-                  onClick={() => updateSetting('longBreak', settings.longBreak + 1)}
-                  className="p-1 hover:bg-secondary rounded"
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm text-muted-foreground">Sessions until Long Break</label>
-              <div className="flex items-center gap-2 mt-1">
-                <button
-                  onClick={() => updateSetting('sessionsUntilLongBreak', settings.sessionsUntilLongBreak - 1)}
-                  className="p-1 hover:bg-secondary rounded"
-                >
-                  <Minus size={16} />
-                </button>
-                <span className="w-12 text-center">{settings.sessionsUntilLongBreak}</span>
-                <button
-                  onClick={() => updateSetting('sessionsUntilLongBreak', settings.sessionsUntilLongBreak + 1)}
-                  className="p-1 hover:bg-secondary rounded"
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-            </div>
+          <div className="flex gap-3 justify-center mb-4">
+            <Button
+              onClick={isRunning ? pauseTimer : startTimer}
+              className={`px-6 py-3 ${
+                isRunning 
+                  ? 'bg-orange-600 hover:bg-orange-700' 
+                  : 'bg-green-600 hover:bg-green-700'
+              }`}
+            >
+              {isRunning ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
+              {isRunning ? 'Pause' : 'Start'}
+            </Button>
+            <Button
+              onClick={resetTimer}
+              variant="outline"
+              className="px-6 py-3 bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Reset
+            </Button>
           </div>
         </div>
-      )}
 
-      {/* Timer Display */}
-      <div className="text-center mb-6">
-        <div className={`text-6xl font-bold mb-4 ${getTimerColor()}`}>
-          {formatTime(timeLeft)}
+        {/* Controls */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="text-sm text-white/70 mb-2 block">Duration</label>
+            <Select value={selectedDuration} onValueChange={(value) => {
+              setSelectedDuration(value);
+              if (!isRunning) {
+                setTimeLeft(parseInt(value) * 60);
+              }
+            }}>
+              <SelectTrigger className="bg-slate-800 border-slate-600 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15">15 minutes</SelectItem>
+                <SelectItem value="25">25 minutes</SelectItem>
+                <SelectItem value="30">30 minutes</SelectItem>
+                <SelectItem value="45">45 minutes</SelectItem>
+                <SelectItem value="60">60 minutes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm text-white/70 mb-2 block">Session Type</label>
+            <Select value={sessionType} onValueChange={setSessionType}>
+              <SelectTrigger className="bg-slate-800 border-slate-600 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="study">📚 Study</SelectItem>
+                <SelectItem value="dsa">💻 DSA</SelectItem>
+                <SelectItem value="dev">⚡ Development</SelectItem>
+                <SelectItem value="reading">📖 Reading</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        
-        {/* Progress Ring */}
-        <div className="relative w-32 h-32 mx-auto mb-6">
-          <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
-            <circle
-              cx="60"
-              cy="60"
-              r="54"
-              stroke="currentColor"
-              strokeWidth="12"
-              fill="transparent"
-              className="text-secondary"
-            />
-            <circle
-              cx="60"
-              cy="60"
-              r="54"
-              stroke="currentColor"
-              strokeWidth="12"
-              fill="transparent"
-              strokeDasharray={`${2 * Math.PI * 54}`}
-              strokeDashoffset={`${2 * Math.PI * 54 * (1 - progress / 100)}`}
-              className={`transition-all duration-1000 ${getTimerColor()}`}
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className={`text-2xl ${getTimerColor()}`}>
-              {Math.round(progress)}%
-            </div>
+
+        {/* Today's Sessions */}
+        <div className="border-t border-white/10 pt-4">
+          <h4 className="text-sm font-semibold text-white/80 mb-3">Today's Sessions</h4>
+          <div className="grid grid-cols-4 gap-2">
+            {sessions.slice(0, 8).map((session, index) => (
+              <div
+                key={session.id}
+                className="text-center p-2 bg-white/5 rounded-lg"
+                title={`${session.session_type} - ${session.duration_minutes}min`}
+              >
+                <div className="text-lg">{getSessionTypeEmoji(session.session_type)}</div>
+                <div className="text-xs text-white/60">{session.duration_minutes}m</div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-3">
+            <span className="text-2xl font-bold text-purple-400">{sessions.length}</span>
+            <span className="text-sm text-white/60 ml-2">sessions today</span>
           </div>
         </div>
       </div>
-
-      {/* Controls */}
-      <div className="flex justify-center gap-3 mb-6">
-        <button
-          onClick={toggleTimer}
-          className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-            isRunning
-              ? 'bg-red-500 hover:bg-red-600 text-white'
-              : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-          }`}
-        >
-          {isRunning ? <Pause size={20} /> : <Play size={20} />}
-          {isRunning ? 'Pause' : 'Start'}
-        </button>
-        
-        <button
-          onClick={resetTimer}
-          className="px-4 py-3 bg-secondary hover:bg-secondary/80 text-foreground rounded-lg transition-colors"
-        >
-          <RotateCcw size={20} />
-        </button>
-        
-        <button
-          onClick={() => startBreak(false)}
-          className="px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors flex items-center gap-2"
-        >
-          <Coffee size={20} />
-          Short
-        </button>
-        
-        <button
-          onClick={() => startBreak(true)}
-          className="px-4 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors flex items-center gap-2"
-        >
-          <Coffee size={20} />
-          Long
-        </button>
-      </div>
-
-      {/* Status */}
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground">
-          {isLongBreak 
-            ? '🛌 Take a long, well-deserved break!' 
-            : isBreak 
-            ? '☕ Quick break - stretch and hydrate!' 
-            : '🧠 Deep focus mode - eliminate all distractions'
-          }
-        </p>
-      </div>
-
-      {/* Sessions Today */}
-      {sessions > 0 && (
-        <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
-          <p className="text-sm text-primary font-medium text-center">
-            🎉 {sessions} Pomodoro session{sessions > 1 ? 's' : ''} completed today!
-          </p>
-        </div>
-      )}
     </div>
   );
 };

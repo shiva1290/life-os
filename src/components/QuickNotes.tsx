@@ -1,85 +1,187 @@
 
-import React, { useState } from 'react';
-import { StickyNote, Plus, Archive, Calendar } from 'lucide-react';
-import { useSupabaseSync } from '@/hooks/useSupabaseSync';
+import React, { useState, useEffect } from 'react';
+import { StickyNote, Plus, Trash2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Textarea } from './ui/textarea';
+import { useToast } from './ui/use-toast';
+
+interface Note {
+  id: string;
+  content: string;
+  created_at: string;
+}
 
 const QuickNotes = () => {
-  const { notes, addNote, loading } = useSupabaseSync();
-  const [newNote, setNewNote] = useState('');
-  const [showAll, setShowAll] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const handleAddNote = async () => {
-    if (!newNote.trim()) return;
-    
-    await addNote(newNote.trim());
-    setNewNote('');
+  useEffect(() => {
+    if (user) {
+      fetchNotes();
+    }
+  }, [user]);
+
+  const fetchNotes = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setNotes(data || []);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addNote = async () => {
+    if (!user || !newNoteContent.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('notes')
+        .insert([{
+          content: newNoteContent,
+          user_id: user.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      setNotes(prev => [data, ...prev.slice(0, 4)]);
+      setNewNoteContent('');
+      setIsAddingNote(false);
+      
+      toast({
+        title: "Success!",
+        description: "Note added successfully",
+      });
+    } catch (error) {
+      console.error('Error adding note:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add note",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteNote = async (id: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      setNotes(prev => prev.filter(n => n.id !== id));
+      
+      toast({
+        title: "Success!",
+        description: "Note deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete note",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
     return (
-      <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 flex items-center justify-center">
+      <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20">
+    <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
             <StickyNote className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="text-xl font-bold text-white">Quick Notes</h3>
-        </div>
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-        >
-          <Archive className="w-5 h-5 text-white" />
-        </button>
-      </div>
-      
-      <div className="mb-4">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Jot down a quick note..."
-            className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 backdrop-blur-sm"
-            onKeyPress={(e) => e.key === 'Enter' && handleAddNote()}
-          />
-          <button
-            onClick={handleAddNote}
-            className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-2xl hover:from-yellow-600 hover:to-orange-600 transition-all flex items-center gap-2 shadow-lg"
-          >
-            <Plus size={16} />
-            Add
-          </button>
-        </div>
-      </div>
-      
-      <div className="space-y-3 max-h-64 overflow-y-auto">
-        {notes.map((note) => (
-          <div
-            key={note.id}
-            className="p-3 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm"
-          >
-            <p className="text-white text-sm">{note.content}</p>
-            <div className="flex items-center gap-1 mt-2 text-white/50 text-xs">
-              <Calendar size={12} />
-              {new Date(note.created_at).toLocaleDateString()}
+            <div>
+              <h3 className="text-xl font-bold text-white">📝 Quick Notes</h3>
+              <p className="text-sm text-white/70">Capture your thoughts</p>
             </div>
           </div>
-        ))}
-        
-        {notes.length === 0 && (
-          <div className="text-center py-8 text-white/60">
-            <div className="text-4xl mb-2">📝</div>
-            <p>No notes yet. Add your first thought above!</p>
-          </div>
-        )}
+          <Dialog open={isAddingNote} onOpenChange={setIsAddingNote}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Note
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-slate-900 border-slate-700">
+              <DialogHeader>
+                <DialogTitle className="text-white">Add Quick Note</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Textarea
+                  placeholder="Write your note here..."
+                  value={newNoteContent}
+                  onChange={(e) => setNewNoteContent(e.target.value)}
+                  className="bg-slate-800 border-slate-600 text-white min-h-[120px]"
+                />
+                <Button onClick={addNote} className="w-full bg-yellow-600 hover:bg-yellow-700">
+                  Add Note
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="space-y-3 max-h-80 overflow-y-auto">
+          {notes.map((note) => (
+            <div
+              key={note.id}
+              className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200"
+            >
+              <div className="flex justify-between items-start gap-3">
+                <div className="flex-1">
+                  <p className="text-white text-sm leading-relaxed">{note.content}</p>
+                  <p className="text-xs text-white/50 mt-2">
+                    {new Date(note.created_at).toLocaleDateString()} at {new Date(note.created_at).toLocaleTimeString()}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteNote(note.id)}
+                  className="text-red-400 hover:text-red-300 shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          {notes.length === 0 && (
+            <div className="text-center py-8 text-white/60">
+              <StickyNote className="w-12 h-12 mx-auto mb-4" />
+              <p>No notes yet. Add your first note to capture ideas!</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
