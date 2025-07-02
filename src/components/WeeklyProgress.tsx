@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, TrendingUp, Target, Award } from 'lucide-react';
+import { TrendingUp, Award } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -43,6 +43,7 @@ const WeeklyProgress = () => {
       const { data: dsaData } = await supabase
         .from('dsa_problems')
         .select('*')
+        .eq('user_id', user.id)
         .gte('solved_date', weekStart.toISOString().split('T')[0])
         .lt('solved_date', weekEnd.toISOString().split('T')[0]);
 
@@ -50,6 +51,7 @@ const WeeklyProgress = () => {
       const { data: gymData } = await supabase
         .from('gym_checkins')
         .select('*')
+        .eq('user_id', user.id)
         .gte('checkin_date', weekStart.toISOString().split('T')[0])
         .lt('checkin_date', weekEnd.toISOString().split('T')[0]);
 
@@ -57,6 +59,7 @@ const WeeklyProgress = () => {
       const { data: tasksData } = await supabase
         .from('todos')
         .select('*')
+        .eq('user_id', user.id)
         .eq('completed', true)
         .gte('created_date', weekStart.toISOString().split('T')[0])
         .lt('created_date', weekEnd.toISOString().split('T')[0]);
@@ -65,6 +68,7 @@ const WeeklyProgress = () => {
       const { data: focusData } = await supabase
         .from('focus_sessions')
         .select('*')
+        .eq('user_id', user.id)
         .eq('completed', true)
         .gte('created_at', weekStart.toISOString())
         .lt('created_at', weekEnd.toISOString());
@@ -73,6 +77,7 @@ const WeeklyProgress = () => {
       const { data: blocksData } = await supabase
         .from('daily_blocks')
         .select('*')
+        .eq('user_id', user.id)
         .gte('date', weekStart.toISOString().split('T')[0])
         .lt('date', weekEnd.toISOString().split('T')[0]);
 

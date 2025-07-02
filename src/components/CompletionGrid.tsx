@@ -57,12 +57,32 @@ const CompletionGrid = () => {
           .eq('user_id', user.id)
           .eq('checkin_date', dateStr);
 
+        // Check completed todos for the day
+        const { data: todoData } = await supabase
+          .from('todos')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('created_date', dateStr)
+          .eq('completed', true);
+
         const codingDone = (dsaData?.length || 0) > 0 || (focusData?.length || 0) > 0;
         const gymDone = (gymData?.length || 0) > 0;
         
-        // For sleep and diet, we'll simulate for now (can be enhanced later)
-        const sleepGood = Math.random() > 0.3; // 70% chance of good sleep
-        const dietGood = Math.random() > 0.4; // 60% chance of good diet
+        // Use real data for sleep and diet tracking based on completed todos
+        const sleepTodos = todoData?.filter(todo => 
+          todo.text.toLowerCase().includes('sleep') || 
+          todo.text.toLowerCase().includes('bed') ||
+          todo.text.toLowerCase().includes('rest')
+        );
+        const dietTodos = todoData?.filter(todo => 
+          todo.text.toLowerCase().includes('water') || 
+          todo.text.toLowerCase().includes('meal') ||
+          todo.text.toLowerCase().includes('protein') ||
+          todo.text.toLowerCase().includes('diet')
+        );
+
+        const sleepGood = (sleepTodos?.length || 0) > 0;
+        const dietGood = (dietTodos?.length || 0) > 0;
 
         weekData.push({
           date: dateStr,

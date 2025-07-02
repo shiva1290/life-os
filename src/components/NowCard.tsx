@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Clock, Play, CheckCircle, RotateCcw } from 'lucide-react';
+import { Clock, CheckCircle } from 'lucide-react';
 import { useOperatorSystem } from '@/hooks/useOperatorSystem';
 import { Button } from './ui/button';
 
@@ -77,7 +77,7 @@ const NowCard = () => {
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Button */}
         <div className="space-y-3">
           {!currentBlock.completed ? (
             <Button
@@ -93,24 +93,6 @@ const NowCard = () => {
               Completed ✅
             </div>
           )}
-
-          {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Focus Mode
-            </Button>
-            <Button
-              variant="outline"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Skip Block
-            </Button>
-          </div>
         </div>
 
         {/* Progress Indicator */}

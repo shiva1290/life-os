@@ -30,16 +30,57 @@ export const useSupabaseSync = () => {
   const [gymCheckedIn, setGymCheckedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Calculate DSA streak
+  const calculateDSAStreak = async (userId: string) => {
+    try {
+      const { data: problems, error } = await supabase
+        .from('dsa_problems')
+        .select('solved_date')
+        .eq('user_id', userId)
+        .order('solved_date', { ascending: false });
+
+      if (error) throw error;
+
+      if (!problems || problems.length === 0) return 0;
+
+      let streak = 0;
+      const today = new Date();
+      const dates = problems.map(p => p.solved_date).filter(Boolean);
+      const uniqueDates = [...new Set(dates)].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+      for (let i = 0; i < uniqueDates.length; i++) {
+        const problemDate = new Date(uniqueDates[i]);
+        const expectedDate = new Date(today);
+        expectedDate.setDate(today.getDate() - i);
+        
+        if (problemDate.toDateString() === expectedDate.toDateString()) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+
+      return streak;
+    } catch (error) {
+      console.error('Error calculating DSA streak:', error);
+      return 0;
+    }
+  };
+
   // Fetch data from Supabase
   const fetchData = async () => {
     if (!user) return;
     
     try {
+      const today = new Date().toISOString().split('T')[0];
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - 7);
+
       // Fetch todos
       const { data: todosData, error: todosError } = await supabase
         .from('todos')
         .select('*')
-        .eq('created_date', new Date().toISOString().split('T')[0])
+        .eq('created_date', today)
         .order('created_at', { ascending: false });
 
       if (todosError) throw todosError;
@@ -60,11 +101,32 @@ export const useSupabaseSync = () => {
       if (notesError) throw notesError;
       setNotes(notesData || []);
 
-      // Fetch DSA problems - RESET COUNT TO 0
-      setDsaCount({ today: 0, week: 0, streak: 0 });
+      // Fetch DSA problems - REAL DATA
+      const { data: dsaToday, error: dsaTodayError } = await supabase
+        .from('dsa_problems')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('solved_date', today);
+
+      if (dsaTodayError) throw dsaTodayError;
+
+      const { data: dsaWeek, error: dsaWeekError } = await supabase
+        .from('dsa_problems')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('solved_date', weekStart.toISOString().split('T')[0]);
+
+      if (dsaWeekError) throw dsaWeekError;
+
+      const streak = await calculateDSAStreak(user.id);
+
+      setDsaCount({
+        today: dsaToday?.length || 0,
+        week: dsaWeek?.length || 0,
+        streak
+      });
 
       // Fetch gym check-in
-      const today = new Date().toISOString().split('T')[0];
       const { data: gymData, error: gymError } = await supabase
         .from('gym_checkins')
         .select('*')
@@ -164,6 +226,7 @@ export const useSupabaseSync = () => {
 
       if (error) throw error;
       setNotes(prev => [data, ...prev.slice(0, 4)]);
+      await fetchData(); // Refresh data
       return data;
     } catch (error) {
       console.error('Error adding note:', error);
@@ -188,7 +251,7 @@ export const useSupabaseSync = () => {
         }]);
 
       if (error) throw error;
-      setDsaCount(prev => ({ ...prev, today: prev.today + 1 }));
+      await fetchData(); // Refresh data to get updated counts
     } catch (error) {
       console.error('Error adding DSA problem:', error);
       toast({
@@ -226,6 +289,7 @@ export const useSupabaseSync = () => {
         if (error) throw error;
         setGymCheckedIn(true);
       }
+      await fetchData(); // Refresh data
     } catch (error) {
       console.error('Error toggling gym checkin:', error);
       toast({
@@ -235,6 +299,44 @@ export const useSupabaseSync = () => {
       });
     }
   };
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    if (!user) return;
+
+    const channels = [
+      supabase.channel('todos-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'todos',
+          filter: `user_id=eq.${user.id}`
+        }, () => fetchData())
+        .subscribe(),
+
+      supabase.channel('dsa-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'dsa_problems',
+          filter: `user_id=eq.${user.id}`
+        }, () => fetchData())
+        .subscribe(),
+
+      supabase.channel('gym-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'gym_checkins',
+          filter: `user_id=eq.${user.id}`
+        }, () => fetchData())
+        .subscribe()
+    ];
+
+    return () => {
+      channels.forEach(channel => supabase.removeChannel(channel));
+    };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
