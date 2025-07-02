@@ -9,6 +9,8 @@ import HabitStreakView from '../components/HabitStreakView';
 import QuickNotes from '../components/QuickNotes';
 import WeeklyProgress from '../components/WeeklyProgress';
 import FocusTimer from '../components/FocusTimer';
+import DSATracker from '../components/DSATracker';
+import GymCheckIn from '../components/GymCheckIn';
 
 // Default schedules
 const defaultWeekdaySchedule = [
@@ -48,53 +50,53 @@ const Index = () => {
   const [activeWeekendDay, setActiveWeekendDay] = useState<'saturday' | 'sunday'>('saturday');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl shadow-2xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="text-xl sm:text-2xl">⚡</div>
-              <h1 className="text-lg sm:text-xl font-bold gradient-text">LifeOS Dashboard</h1>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-3">
+              <div className="text-2xl">⚡</div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-white to-blue-300 bg-clip-text text-transparent">LifeOS Dashboard</h1>
             </div>
             
-            <nav className="flex space-x-0.5 sm:space-x-1">
+            <nav className="flex space-x-1">
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all backdrop-blur-sm ${
                   activeTab === 'dashboard'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                    ? 'bg-white/20 text-white shadow-lg'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
                 }`}
               >
                 Dashboard
               </button>
               <button
                 onClick={() => setActiveTab('productivity')}
-                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all backdrop-blur-sm ${
                   activeTab === 'productivity'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                    ? 'bg-white/20 text-white shadow-lg'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
                 }`}
               >
                 Productivity
               </button>
               <button
                 onClick={() => setActiveTab('career')}
-                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all backdrop-blur-sm ${
                   activeTab === 'career'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                    ? 'bg-white/20 text-white shadow-lg'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
                 }`}
               >
                 Career
               </button>
               <button
                 onClick={() => setActiveTab('fitness')}
-                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all backdrop-blur-sm ${
                   activeTab === 'fitness'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                    ? 'bg-white/20 text-white shadow-lg'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
                 }`}
               >
                 Fitness
@@ -104,17 +106,32 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-8">
         {activeTab === 'dashboard' ? (
-          <div className="space-y-6 sm:space-y-8">
+          <div className="space-y-8">
             {/* Current Task Card */}
             <NowCard />
+
+            {/* Quick Action Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <DSATracker />
+              <GymCheckIn />
+              <div className="backdrop-blur-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border border-white/20 rounded-3xl shadow-2xl p-6">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">🔥</div>
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {Math.floor(Math.random() * 30) + 15}
+                  </div>
+                  <div className="text-sm text-white/70">Day Streak</div>
+                </div>
+              </div>
+            </div>
 
             {/* Life Goals Section */}
             <EditableGoalSection />
 
             {/* Schedule Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <EditableSchedule 
                 title="Daily Schedule (Mon-Fri)"
                 scheduleKey="weekday"
@@ -122,23 +139,23 @@ const Index = () => {
               />
               
               <div className="space-y-4">
-                <div className="flex bg-secondary rounded-lg p-1">
+                <div className="flex bg-white/10 rounded-2xl p-1 backdrop-blur-sm">
                   <button
                     onClick={() => setActiveWeekendDay('saturday')}
-                    className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm transition-all ${
+                    className={`flex-1 px-4 py-2 rounded-xl text-sm transition-all ${
                       activeWeekendDay === 'saturday' 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'bg-white/20 text-white shadow-lg' 
+                        : 'text-white/70 hover:text-white'
                     }`}
                   >
                     Saturday
                   </button>
                   <button
                     onClick={() => setActiveWeekendDay('sunday')}
-                    className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm transition-all ${
+                    className={`flex-1 px-4 py-2 rounded-xl text-sm transition-all ${
                       activeWeekendDay === 'sunday' 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'bg-white/20 text-white shadow-lg' 
+                        : 'text-white/70 hover:text-white'
                     }`}
                   >
                     Sunday
@@ -164,34 +181,34 @@ const Index = () => {
             </div>
 
             {/* Daily Affirmation */}
-            <div className="glass-card p-6 sm:p-8 rounded-xl text-center">
-              <h2 className="text-xl sm:text-2xl font-bold gradient-text mb-4">Daily Affirmation</h2>
-              <blockquote className="text-sm sm:text-lg leading-relaxed space-y-2">
-                <p className="italic text-foreground">
+            <div className="backdrop-blur-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border border-white/20 rounded-3xl shadow-2xl p-8 text-center">
+              <h2 className="text-2xl font-bold text-white mb-6">Daily Affirmation</h2>
+              <blockquote className="text-lg leading-relaxed space-y-3">
+                <p className="italic text-white/90">
                   "I am a high-performing operator. I show up even when I'm tired."
                 </p>
-                <p className="italic text-foreground">
+                <p className="italic text-white/90">
                   "I move with clarity. I pray, I push, I reflect."
                 </p>
-                <p className="italic text-primary font-semibold">
+                <p className="italic text-blue-300 font-semibold">
                   "My 12 LPA job already exists. I'm just catching up to it."
                 </p>
               </blockquote>
             </div>
           </div>
         ) : activeTab === 'productivity' ? (
-          <div className="space-y-6 sm:space-y-8">
+          <div className="space-y-8">
             {/* Focus Timer */}
             <FocusTimer />
 
             {/* Daily Tasks and Habits */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <DailyTodos />
               <HabitStreakView />
             </div>
 
             {/* Quick Notes and Weekly Progress */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <QuickNotes />
               <WeeklyProgress />
             </div>
@@ -204,9 +221,9 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 mt-12 sm:mt-16">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
-          <div className="text-center text-xs sm:text-sm text-muted-foreground">
+      <footer className="border-t border-white/10 mt-16 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6">
+          <div className="text-center text-sm text-white/60">
             <p>LifeOS Dashboard • Stay focused, stay consistent, become unstoppable</p>
           </div>
         </div>

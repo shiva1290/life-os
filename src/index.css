@@ -3,40 +3,31 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LifeOS Dashboard - Dark Professional Theme */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* LifeOS Dashboard - Apple Liquid Glass Professional Theme */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @layer base {
   :root {
     --background: 220 27% 8%;
     --foreground: 220 9% 95%;
-
     --card: 220 20% 12%;
     --card-foreground: 220 9% 95%;
-
     --popover: 220 20% 12%;
     --popover-foreground: 220 9% 95%;
-
     --primary: 217 91% 60%;
     --primary-foreground: 220 27% 8%;
-
     --secondary: 220 14% 18%;
     --secondary-foreground: 220 9% 95%;
-
     --muted: 220 14% 18%;
     --muted-foreground: 220 9% 65%;
-
     --accent: 217 91% 60%;
     --accent-foreground: 220 27% 8%;
-
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 220 14% 20%;
     --input: 220 14% 20%;
     --ring: 217 91% 60%;
-
-    --radius: 0.75rem;
+    --radius: 1.5rem;
   }
 
   * {
@@ -44,8 +35,29 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter;
+    @apply font-inter;
     font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+    min-height: 100vh;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 }
 
@@ -54,26 +66,57 @@
     font-family: 'Inter', sans-serif;
   }
   
+  /* Apple Liquid Glass Effect */
   .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+    @apply backdrop-blur-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border border-white/20 shadow-2xl;
   }
   
   .gradient-text {
-    @apply bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-white to-blue-300 bg-clip-text text-transparent;
   }
   
   .current-task {
-    @apply ring-2 ring-primary/50 bg-primary/10 border-primary/30;
+    @apply ring-2 ring-blue-500/50 bg-blue-500/10 border-blue-500/30 shadow-2xl shadow-blue-500/20;
+  }
+
+  /* Enhanced button styles */
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium rounded-2xl px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:from-blue-600 hover:to-purple-600;
+  }
+
+  .btn-glass {
+    @apply backdrop-blur-xl bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-2 hover:bg-white/20 transition-all duration-300;
+  }
+
+  /* Enhanced animations */
+  .animate-pulse-slow {
+    animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.02);
+    }
   }
 
   /* Mobile-specific improvements */
   @media (max-width: 640px) {
     .glass-card {
-      @apply px-3 py-4;
+      @apply px-4 py-5;
+    }
+    
+    /* Ensure touch targets are large enough */
+    button {
+      min-height: 44px;
     }
   }
 
-  /* Custom grid for habit streaks on mobile */
+  /* Grid utilities for habit streaks */
   .grid-cols-20 {
     grid-template-columns: repeat(20, minmax(0, 1fr));
   }
@@ -82,8 +125,33 @@
     grid-template-columns: repeat(25, minmax(0, 1fr));
   }
 
-  /* Animate pulse for icons */
-  .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  /* Enhanced focus states for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-transparent;
+  }
+
+  /* Liquid glass input styling */
+  input, textarea, select {
+    @apply backdrop-blur-sm;
+  }
+
+  /* Enhanced hover effects */
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl;
+  }
+
+  /* Professional shadow effects */
+  .shadow-professional {
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .shadow-professional-lg {
+    box-shadow: 
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 }
