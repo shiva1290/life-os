@@ -12,7 +12,7 @@ import LoadingSpinner from './LoadingSpinner';
 import ErrorBoundary from './ErrorBoundary';
 
 const LiveDailyTimeline = () => {
-  const { dailyBlocks, getCurrentBlock, updateDailyBlock, addDailyBlock, deleteDailyBlock, loading, error } = useOperatorSystem();
+  const { dailyBlocks, getCurrentBlock, updateDailyBlock, addDailyBlock, deleteDailyBlock, loading } = useOperatorSystem();
   const { showToast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isAddingBlock, setIsAddingBlock] = useState(false);
@@ -199,13 +199,6 @@ const LiveDailyTimeline = () => {
           {loading && (
             <div className="flex items-center justify-center py-8">
               <LoadingSpinner size="lg" />
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && (
-            <div className="text-center py-8 text-red-400">
-              <p className="text-sm">Failed to load timeline. Please try again.</p>
             </div>
           )}
 
