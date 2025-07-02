@@ -33,10 +33,10 @@ const Navigation = () => {
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 glass-card-intense border-b border-white/10 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
-          <div className="flex justify-between items-center py-4 md:py-6">
+          <div className="flex justify-between items-center py-3 md:py-4">
             {/* Logo */}
             <div className="text-xl md:text-2xl font-black gradient-text tracking-tight">
-              OperatorOS
+              Life OS
             </div>
 
             {/* Desktop Navigation */}
@@ -111,7 +111,7 @@ const Navigation = () => {
       </nav>
 
       {/* Spacer to prevent content from being hidden behind fixed nav */}
-      <div className="h-16 md:h-20" />
+      <div className="h-14 md:h-16" />
     </>
   );
 };
