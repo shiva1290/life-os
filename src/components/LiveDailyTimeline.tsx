@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Plus } from 'lucide-react';
 import { useOperatorSystem } from '@/hooks/useOperatorSystem';
-import { useToast } from '@/hooks/useToast';
+import { toast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
@@ -13,7 +13,6 @@ import ErrorBoundary from './ErrorBoundary';
 
 const LiveDailyTimeline = () => {
   const { dailyBlocks, getCurrentBlock, updateDailyBlock, addDailyBlock, deleteDailyBlock, loading } = useOperatorSystem();
-  const { showToast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isAddingBlock, setIsAddingBlock] = useState(false);
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
@@ -38,9 +37,16 @@ const LiveDailyTimeline = () => {
   const handleCompleteBlock = async (blockId: string) => {
     try {
       await updateDailyBlock(blockId, { completed: true });
-      showToast('success', 'Block completed! 🎯');
+      toast({
+        title: 'Success',
+        description: 'Block completed! 🎯',
+      });
     } catch (error) {
-      showToast('error', 'Failed to complete block');
+      toast({
+        title: 'Error',
+        description: 'Failed to complete block',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -51,7 +57,11 @@ const LiveDailyTimeline = () => {
 
   const handleSaveEdit = async () => {
     if (!editingBlock || !editData.task.trim()) {
-      showToast('error', 'Task cannot be empty');
+      toast({
+        title: 'Error',
+        description: 'Task cannot be empty',
+        variant: 'destructive',
+      });
       return;
     }
     
@@ -63,9 +73,16 @@ const LiveDailyTimeline = () => {
       
       setEditingBlock(null);
       setEditData({ task: '', time_slot: '' });
-      showToast('success', 'Block updated successfully');
+      toast({
+        title: 'Success',
+        description: 'Block updated successfully',
+      });
     } catch (error) {
-      showToast('error', 'Failed to update block');
+      toast({
+        title: 'Error',
+        description: 'Failed to update block',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -76,7 +93,11 @@ const LiveDailyTimeline = () => {
 
   const handleAddBlock = async () => {
     if (!newBlock.time_slot.trim() || !newBlock.task.trim()) {
-      showToast('error', 'Please fill all required fields');
+      toast({
+        title: 'Error',
+        description: 'Please fill all required fields',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -90,18 +111,32 @@ const LiveDailyTimeline = () => {
 
       setNewBlock({ time_slot: '', task: '', emoji: '⚡', block_type: 'routine' });
       setIsAddingBlock(false);
-      showToast('success', 'Block added successfully');
+      toast({
+        title: 'Success',
+        description: 'Block added successfully',
+      });
     } catch (error) {
-      showToast('error', 'Failed to add block');
+      toast({
+        title: 'Error',
+        description: 'Failed to add block',
+        variant: 'destructive',
+      });
     }
   };
 
   const handleDeleteBlock = async (blockId: string) => {
     try {
       await deleteDailyBlock(blockId);
-      showToast('success', 'Block deleted');
+      toast({
+        title: 'Success',
+        description: 'Block deleted',
+      });
     } catch (error) {
-      showToast('error', 'Failed to delete block');
+      toast({
+        title: 'Error',
+        description: 'Failed to delete block',
+        variant: 'destructive',
+      });
     }
   };
 
