@@ -43,7 +43,13 @@ export const useSupabaseSync = () => {
         .order('created_at', { ascending: false });
 
       if (todosError) throw todosError;
-      setTodos(todosData || []);
+      // Type-safe mapping of todos data
+      const typedTodos: Todo[] = (todosData || []).map(todo => ({
+        ...todo,
+        priority: todo.priority as 'high' | 'medium' | 'low',
+        category: todo.category as 'study' | 'gym' | 'personal' | 'college'
+      }));
+      setTodos(typedTodos);
 
       // Fetch notes
       const { data: notesData, error: notesError } = await supabase
@@ -105,8 +111,14 @@ export const useSupabaseSync = () => {
         .single();
 
       if (error) throw error;
-      setTodos(prev => [data, ...prev]);
-      return data;
+      // Type-safe mapping of returned data
+      const typedTodo: Todo = {
+        ...data,
+        priority: data.priority as 'high' | 'medium' | 'low',
+        category: data.category as 'study' | 'gym' | 'personal' | 'college'
+      };
+      setTodos(prev => [typedTodo, ...prev]);
+      return typedTodo;
     } catch (error) {
       console.error('Error adding todo:', error);
       toast({

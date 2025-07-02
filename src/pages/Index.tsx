@@ -8,6 +8,7 @@ import QuickNotes from "@/components/QuickNotes";
 import UserProfile from "@/components/UserProfile";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import HabitTracker from "@/components/HabitTracker";
+import DataSeeder from "@/components/DataSeeder";
 
 const Index = () => {
   return (
@@ -64,6 +65,9 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Data Seeder Component */}
+      <DataSeeder />
     </div>
   );
 };
