@@ -7,7 +7,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { useToast } from './ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface Todo {
   id: string;
@@ -25,8 +25,8 @@ const DailyTodos = () => {
   const [isAddingTodo, setIsAddingTodo] = useState(false);
   const [newTodo, setNewTodo] = useState({
     text: '',
-    priority: 'medium' as const,
-    category: 'study' as const
+    priority: 'medium' as 'high' | 'medium' | 'low',
+    category: 'study' as 'study' | 'gym' | 'personal' | 'college'
   });
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +48,18 @@ const DailyTodos = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTodos(data || []);
+      
+      // Type-safe mapping from Supabase data
+      const typedTodos: Todo[] = (data || []).map(todo => ({
+        id: todo.id,
+        text: todo.text,
+        completed: todo.completed || false,
+        priority: (todo.priority as 'high' | 'medium' | 'low') || 'medium',
+        category: (todo.category as 'study' | 'gym' | 'personal' | 'college') || 'study',
+        created_date: todo.created_date || today
+      }));
+      
+      setTodos(typedTodos);
     } catch (error) {
       console.error('Error fetching todos:', error);
     } finally {
@@ -74,7 +85,18 @@ const DailyTodos = () => {
         .single();
 
       if (error) throw error;
-      setTodos(prev => [data, ...prev]);
+      
+      // Type-safe mapping of new todo
+      const typedTodo: Todo = {
+        id: data.id,
+        text: data.text,
+        completed: data.completed || false,
+        priority: (data.priority as 'high' | 'medium' | 'low') || 'medium',
+        category: (data.category as 'study' | 'gym' | 'personal' | 'college') || 'study',
+        created_date: data.created_date || new Date().toISOString().split('T')[0]
+      };
+      
+      setTodos(prev => [typedTodo, ...prev]);
       setNewTodo({ text: '', priority: 'medium', category: 'study' });
       setIsAddingTodo(false);
       
@@ -200,7 +222,8 @@ const DailyTodos = () => {
                   onChange={(e) => setNewTodo(prev => ({ ...prev, text: e.target.value }))}
                   className="bg-slate-800 border-slate-600 text-white"
                 />
-                <Select value={newTodo.priority} onValueChange={(value: 'high' | 'medium' | 'low') => setNewTodo(prev => ({ ...prev, priority: value }))}>
+                <Select value={newTodo.priority} onValueChange={(value: 'high' | 'medium' | 'low') => 
+                  setNewTodo(prev => ({ ...prev, priority: value }))}>
                   <SelectTrigger className="bg-slate-800 border-slate-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -210,7 +233,8 @@ const DailyTodos = () => {
                     <SelectItem value="low">Low Priority</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={newTodo.category} onValueChange={(value: 'study' | 'gym' | 'personal' | 'college') => setNewTodo(prev => ({ ...prev, category: value }))}>
+                <Select value={newTodo.category} onValueChange={(value: 'study' | 'gym' | 'personal' | 'college') => 
+                  setNewTodo(prev => ({ ...prev, category: value }))}>
                   <SelectTrigger className="bg-slate-800 border-slate-600 text-white">
                     <SelectValue />
                   </SelectTrigger>

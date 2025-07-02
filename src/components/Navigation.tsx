@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Target, Calendar, LogOut } from 'lucide-react';
+import { Home, Target, Calendar, Wrench, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from './ui/button';
 
@@ -11,6 +11,7 @@ const Navigation = () => {
   
   const navItems = [
     { path: '/', icon: Home, label: 'Dashboard' },
+    { path: '/tools', icon: Wrench, label: 'Tools' },
     { path: '/timelines', icon: Target, label: 'Timelines' },
     { path: '/habits', icon: Calendar, label: 'Habits' },
   ];

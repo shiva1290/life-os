@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
+import Tools from "./pages/Tools";
 import Auth from "./pages/Auth";
 import Timelines from "./pages/Timelines";
 import Habits from "./pages/Habits";
@@ -28,9 +29,14 @@ const App = () => (
                 <Index />
               </ProtectedRoute>
             } />
+            <Route path="/tools" element={
+              <ProtectedRoute>
+                <Tools />
+              </ProtectedRoute>
+            } />
             <Route path="/timelines" element={
               <ProtectedRoute>
-                <Timelines />
+                <Tools />
               </ProtectedRoute>
             } />
             <Route path="/habits" element={

@@ -40,18 +40,21 @@ const GitHubStyleStreaks = () => {
         const { data: dsaData } = await supabase
           .from('dsa_problems')
           .select('*')
+          .eq('user_id', user.id)
           .eq('solved_date', dateStr);
 
         // Fetch gym checkins for this date
         const { data: gymData } = await supabase
           .from('gym_checkins')
           .select('*')
+          .eq('user_id', user.id)
           .eq('checkin_date', dateStr);
 
         // Fetch habit completions for this date
         const { data: habitData } = await supabase
           .from('habit_completions')
           .select('*')
+          .eq('user_id', user.id)
           .eq('completed_date', dateStr);
 
         // Fetch total habits (simplified - assume 5 core habits)
@@ -93,13 +96,6 @@ const GitHubStyleStreaks = () => {
     }
   };
 
-  const getWeekData = (weekIndex: number) => {
-    const startIndex = weekIndex * 7;
-    return streakData.slice(startIndex, startIndex + 7);
-  };
-
-  const getTotalWeeks = () => Math.ceil(streakData.length / 7);
-
   if (loading) {
     return (
       <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-center">
@@ -117,16 +113,14 @@ const GitHubStyleStreaks = () => {
 
       {/* GitHub-style grid */}
       <div className="mb-6">
-        <div className="grid grid-cols-53 gap-1 mb-4">
-          {Array.from({ length: getTotalWeeks() }, (_, weekIndex) => 
-            getWeekData(weekIndex).map((day, dayIndex) => (
-              <div
-                key={`${weekIndex}-${dayIndex}`}
-                className={`w-3 h-3 rounded-sm ${getIntensityColor(day.intensity)} transition-all hover:scale-110 cursor-pointer`}
-                title={`${day.date}: ${day.dsa_count} DSA, ${day.gym_done ? 'Gym ✓' : 'No Gym'}, ${day.habits_completed}/${day.total_habits} habits`}
-              />
-            ))
-          )}
+        <div className="grid grid-cols-53 gap-[2px] mb-4">
+          {streakData.map((day, index) => (
+            <div
+              key={index}
+              className={`w-3 h-3 rounded-sm ${getIntensityColor(day.intensity)} transition-all hover:scale-110 cursor-pointer`}
+              title={`${day.date}: ${day.dsa_count} DSA, ${day.gym_done ? 'Gym ✓' : 'No Gym'}, ${day.habits_completed}/${day.total_habits} habits`}
+            />
+          ))}
         </div>
 
         {/* Legend */}
