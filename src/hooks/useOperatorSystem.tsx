@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -298,26 +297,22 @@ export const useOperatorSystem = () => {
     }
   };
 
-  // Get current active block
-  const getCurrentBlock = () => {
-    const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5);
-    
-    return dailyBlocks.find(block => {
-      const timeSlot = block.time_slot;
-      if (!timeSlot.includes('-')) return false;
+  // Get current active block with improved time parsing
+  const getCurrentBlock = useCallback(() => {
+    try {
+      const currentMinutes = getCurrentTimeInMinutes();
       
-      const [startTime, endTime] = timeSlot.split('-');
-      const [startHour, startMin] = startTime.split(':').map(Number);
-      const [endHour, endMin] = endTime.split(':').map(Number);
-      
-      const blockStart = startHour * 60 + startMin;
-      const blockEnd = endHour * 60 + endMin;
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      
-      return currentMinutes >= blockStart && currentMinutes < blockEnd;
-    });
-  };
+      return dailyBlocks.find(block => {
+        const timeSlot = parseTimeSlot(block.time_slot);
+        if (!timeSlot) return false;
+        
+        return isTimeInRange(currentMinutes, timeSlot.start, timeSlot.end);
+      });
+    } catch (error) {
+      console.error('Error getting current block:', error);
+      return null;
+    }
+  }, [dailyBlocks]);
 
   // Initialize default daily blocks for new users
   const initializeDefaultBlocks = async () => {

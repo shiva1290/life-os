@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Clock, Plus } from 'lucide-react';
+import { Clock, Plus, AlertCircle, CheckCircle } from 'lucide-react';
 import { useOperatorSystem } from '@/hooks/useOperatorSystem';
 import { toast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import TimelineBlock from './TimelineBlock';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorBoundary from './ErrorBoundary';
+import { parseTimeSlot, getCurrentTimeInMinutes } from '@/utils/timeHelpers';
 
 const LiveDailyTimeline = () => {
   const { dailyBlocks, getCurrentBlock, updateDailyBlock, addDailyBlock, deleteDailyBlock, loading } = useOperatorSystem();
@@ -33,6 +33,20 @@ const LiveDailyTimeline = () => {
 
   const currentBlock = getCurrentBlock();
   const currentTimeStr = currentTime.toTimeString().slice(0, 5);
+  const currentMinutes = getCurrentTimeInMinutes();
+
+  // Enhanced block status detection
+  const getBlockStatus = (block: any) => {
+    if (block.completed) return 'completed';
+    if (currentBlock?.id === block.id) return 'active';
+    
+    const timeSlot = parseTimeSlot(block.time_slot);
+    if (!timeSlot) return 'upcoming';
+    
+    if (currentMinutes > timeSlot.end) return 'missed';
+    if (currentMinutes > timeSlot.start) return 'active';
+    return 'upcoming';
+  };
 
   const handleCompleteBlock = async (blockId: string) => {
     try {
@@ -143,23 +157,23 @@ const LiveDailyTimeline = () => {
   return (
     <ErrorBoundary>
       <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
-        <div className="p-4 md:p-6">
+        <div className="p-3 md:p-6">
           <div className="flex items-center justify-between mb-4 md:mb-6">
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1 md:mb-2">🕹️ Live Daily Timeline</h2>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg md:text-2xl font-bold text-white mb-1 md:mb-2 truncate">🕹️ Live Daily Timeline</h2>
               <p className="text-xs md:text-sm text-white/70 flex items-center gap-2">
-                <Clock className="w-3 h-3 md:w-4 md:h-4" />
-                Current Time: {currentTimeStr}
+                <Clock className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                <span className="truncate">Current Time: {currentTimeStr}</span>
               </p>
             </div>
             <Dialog open={isAddingBlock} onOpenChange={setIsAddingBlock}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-8 md:h-10 px-3 md:px-4 text-xs md:text-sm">
+                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-8 md:h-10 px-3 md:px-4 text-xs md:text-sm flex-shrink-0">
                   <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                  Add Block
+                  <span className="hidden sm:inline">Add Block</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-slate-900 border-slate-700 max-w-md">
+              <DialogContent className="bg-slate-900 border-slate-700 max-w-md mx-4">
                 <DialogHeader>
                   <DialogTitle className="text-white">Add Daily Block</DialogTitle>
                 </DialogHeader>
@@ -204,14 +218,14 @@ const LiveDailyTimeline = () => {
             </Dialog>
           </div>
 
-          {/* Current Block Highlight */}
+          {/* Enhanced Current Block Highlight */}
           {currentBlock && (
-            <div className="mb-4 md:mb-6 p-3 md:p-4 bg-gradient-to-r from-purple-500/30 to-blue-500/30 border border-purple-500/50 rounded-2xl animate-pulse">
+            <div className="mb-4 md:mb-6 p-3 md:p-4 bg-gradient-to-r from-purple-500/30 to-blue-500/30 border-2 border-purple-500/50 rounded-2xl animate-pulse shadow-lg shadow-purple-500/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                  <div className="text-2xl md:text-3xl flex-shrink-0">{currentBlock.emoji}</div>
+                  <div className="text-2xl md:text-3xl flex-shrink-0 animate-bounce">{currentBlock.emoji}</div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-lg md:text-xl font-bold text-white truncate">NOW: {currentBlock.task}</h3>
+                    <h3 className="text-base md:text-xl font-bold text-white truncate">NOW: {currentBlock.task}</h3>
                     <p className="text-xs md:text-sm text-white/70 truncate">{currentBlock.time_slot}</p>
                   </div>
                 </div>
@@ -219,12 +233,13 @@ const LiveDailyTimeline = () => {
                   {!currentBlock.completed && (
                     <Button
                       onClick={() => handleCompleteBlock(currentBlock.id)}
-                      className="bg-green-600 hover:bg-green-700 h-8 md:h-10 px-3 md:px-4 text-xs md:text-sm"
+                      className="bg-green-600 hover:bg-green-700 h-8 md:h-10 px-3 md:px-4 text-xs md:text-sm font-semibold shadow-lg"
                     >
+                      <CheckCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                       Done
                     </Button>
                   )}
-                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50" />
                 </div>
               </div>
             </div>
@@ -237,28 +252,32 @@ const LiveDailyTimeline = () => {
             </div>
           )}
 
-          {/* Timeline */}
+          {/* Enhanced Timeline with Status Indicators */}
           <div className="space-y-2 md:space-y-3 max-h-96 overflow-y-auto">
             {dailyBlocks.map((block) => {
-              const isActive = currentBlock?.id === block.id;
-              const isPast = block.completed;
+              const blockStatus = getBlockStatus(block);
+              const isActive = blockStatus === 'active';
+              const isPast = blockStatus === 'completed';
+              const isMissed = blockStatus === 'missed';
               const isEditing = editingBlock === block.id;
               
               return (
-                <TimelineBlock
-                  key={block.id}
-                  block={block}
-                  isActive={isActive}
-                  isPast={isPast}
-                  isEditing={isEditing}
-                  editData={editData}
-                  onEdit={handleEditBlock}
-                  onSave={handleSaveEdit}
-                  onCancel={handleCancelEdit}
-                  onComplete={handleCompleteBlock}
-                  onDelete={handleDeleteBlock}
-                  onEditDataChange={setEditData}
-                />
+                <div key={block.id} id={`block-${block.id}`}>
+                  <TimelineBlock
+                    block={block}
+                    isActive={isActive}
+                    isPast={isPast}
+                    isMissed={isMissed}
+                    isEditing={isEditing}
+                    editData={editData}
+                    onEdit={handleEdit}
+                    onSave={handleSaveEdit}
+                    onCancel={handleCancelEdit}
+                    onComplete={handleCompleteBlock}
+                    onDelete={handleDeleteBlock}
+                    onEditDataChange={setEditData}
+                  />
+                </div>
               );
             })}
           </div>
