@@ -1,15 +1,10 @@
 
-import DailyRoutine from "@/components/DailyRoutine";
-import DailyTodos from "@/components/DailyTodos";
-import DSATracker from "@/components/DSATracker";
-import GymCheckIn from "@/components/GymCheckIn";
-import NowCard from "@/components/NowCard";
-import QuickNotes from "@/components/QuickNotes";
-import UserProfile from "@/components/UserProfile";
-import WeeklyProgress from "@/components/WeeklyProgress";
-import HabitTracker from "@/components/HabitTracker";
-import DataSeeder from "@/components/DataSeeder";
 import Navigation from "@/components/Navigation";
+import LiveDailyTimeline from "@/components/LiveDailyTimeline";
+import DSAMasterPanel from "@/components/DSAMasterPanel";
+import GitHubStyleStreaks from "@/components/GitHubStyleStreaks";
+import WeeklyOperatorGrid from "@/components/WeeklyOperatorGrid";
+import UserProfile from "@/components/UserProfile";
 
 const Index = () => {
   return (
@@ -26,10 +21,10 @@ const Index = () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">
-                  LifeOS Dashboard
+                  Operator Dashboard
                 </h1>
                 <p className="text-xl text-slate-300">
-                  Your personal productivity operating system
+                  Execute with precision. No compromises.
                 </p>
               </div>
               <UserProfile />
@@ -38,40 +33,25 @@ const Index = () => {
 
           {/* Main Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column */}
+            {/* Left Column - Primary Focus */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Top Row - Status Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                <NowCard />
-                <DSATracker />
-                <GymCheckIn />
-                <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">🔥</div>
-                    <div className="text-2xl font-bold text-orange-400">12</div>
-                    <div className="text-xs text-slate-400">Day Streak</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Daily Tasks */}
-              <DailyTodos />
-
-              {/* Schedule */}
-              <DailyRoutine />
+              {/* Live Timeline - Primary Focus */}
+              <LiveDailyTimeline />
+              
+              {/* Weekly Grid */}
+              <WeeklyOperatorGrid />
             </div>
 
-            {/* Right Column */}
+            {/* Right Column - Secondary Panels */}
             <div className="lg:col-span-4 space-y-6">
-              <WeeklyProgress />
-              <HabitTracker />
-              <QuickNotes />
+              {/* DSA Progress */}
+              <DSAMasterPanel />
+              
+              {/* GitHub Streaks */}
+              <GitHubStyleStreaks />
             </div>
           </div>
         </div>
-
-        {/* Data Seeder Component */}
-        <DataSeeder />
       </div>
     </div>
   );

@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      daily_blocks: {
+        Row: {
+          block_type: string | null
+          completed: boolean | null
+          created_at: string | null
+          date: string | null
+          emoji: string | null
+          id: string
+          is_active: boolean | null
+          task: string
+          time_slot: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          block_type?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          task: string
+          time_slot: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          block_type?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          task?: string
+          time_slot?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       dsa_problems: {
         Row: {
           created_at: string | null
@@ -35,6 +77,36 @@ export type Database = {
           problem_name?: string
           solved_date?: string | null
           topic?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      focus_sessions: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          session_type: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          session_type: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          session_type?: string
           user_id?: string
         }
         Relationships: []
@@ -97,32 +169,44 @@ export type Database = {
       }
       habits: {
         Row: {
+          best_streak: number | null
+          category: string | null
           color: string | null
           created_at: string | null
+          current_streak: number | null
           icon: string | null
           id: string
           name: string
           streak: number | null
+          target_frequency: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          best_streak?: number | null
+          category?: string | null
           color?: string | null
           created_at?: string | null
+          current_streak?: number | null
           icon?: string | null
           id?: string
           name: string
           streak?: number | null
+          target_frequency?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          best_streak?: number | null
+          category?: string | null
           color?: string | null
           created_at?: string | null
+          current_streak?: number | null
           icon?: string | null
           id?: string
           name?: string
           streak?: number | null
+          target_frequency?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -176,6 +260,75 @@ export type Database = {
           id?: string
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      project_tasks: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          project_name: string
+          status: string | null
+          task_title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          project_name: string
+          status?: string | null
+          task_title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          project_name?: string
+          status?: string | null
+          task_title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reflections: {
+        Row: {
+          content: Json | null
+          created_at: string | null
+          date: string | null
+          id: string
+          mood_score: number | null
+          reflection_type: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          mood_score?: number | null
+          reflection_type: string
+          user_id: string
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          mood_score?: number | null
+          reflection_type?: string
+          user_id?: string
         }
         Relationships: []
       }

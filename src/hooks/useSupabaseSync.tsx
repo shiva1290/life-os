@@ -43,7 +43,6 @@ export const useSupabaseSync = () => {
         .order('created_at', { ascending: false });
 
       if (todosError) throw todosError;
-      // Type-safe mapping of todos data
       const typedTodos: Todo[] = (todosData || []).map(todo => ({
         ...todo,
         priority: todo.priority as 'high' | 'medium' | 'low',
@@ -61,17 +60,11 @@ export const useSupabaseSync = () => {
       if (notesError) throw notesError;
       setNotes(notesData || []);
 
-      // Fetch DSA problems
-      const today = new Date().toISOString().split('T')[0];
-      const { data: dsaData, error: dsaError } = await supabase
-        .from('dsa_problems')
-        .select('*')
-        .eq('solved_date', today);
-
-      if (dsaError) throw dsaError;
-      setDsaCount(prev => ({ ...prev, today: dsaData?.length || 0 }));
+      // Fetch DSA problems - RESET COUNT TO 0
+      setDsaCount({ today: 0, week: 0, streak: 0 });
 
       // Fetch gym check-in
+      const today = new Date().toISOString().split('T')[0];
       const { data: gymData, error: gymError } = await supabase
         .from('gym_checkins')
         .select('*')
@@ -111,7 +104,6 @@ export const useSupabaseSync = () => {
         .single();
 
       if (error) throw error;
-      // Type-safe mapping of returned data
       const typedTodo: Todo = {
         ...data,
         priority: data.priority as 'high' | 'medium' | 'low',
