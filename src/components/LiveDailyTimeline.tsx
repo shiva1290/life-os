@@ -188,6 +188,7 @@ const LiveDailyTimeline = () => {
             return (
               <div
                 key={block.id}
+                id={`block-${block.id}`}
                 className={`p-4 rounded-2xl border transition-all duration-300 ${
                   isActive 
                     ? 'bg-gradient-to-r from-purple-500/30 to-blue-500/30 border-purple-500/50 scale-105' 
