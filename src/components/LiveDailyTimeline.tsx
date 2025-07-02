@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Check, RotateCcw, Plus, Edit, Trash2 } from 'lucide-react';
+import { Clock, CheckCircle, Plus, Edit, Trash2, Save, X } from 'lucide-react';
 import { useOperatorSystem } from '@/hooks/useOperatorSystem';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
@@ -11,6 +11,8 @@ const LiveDailyTimeline = () => {
   const { dailyBlocks, getCurrentBlock, updateDailyBlock, addDailyBlock, deleteDailyBlock, loading } = useOperatorSystem();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isAddingBlock, setIsAddingBlock] = useState(false);
+  const [editingBlock, setEditingBlock] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ task: '', time_slot: '' });
   const [newBlock, setNewBlock] = useState({
     time_slot: '',
     task: '',
@@ -21,7 +23,7 @@ const LiveDailyTimeline = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000); // Update every minute
+    }, 60000);
 
     return () => clearInterval(timer);
   }, []);
@@ -31,6 +33,28 @@ const LiveDailyTimeline = () => {
 
   const handleCompleteBlock = async (blockId: string) => {
     await updateDailyBlock(blockId, { completed: true });
+  };
+
+  const handleEditBlock = (block: any) => {
+    setEditingBlock(block.id);
+    setEditData({ task: block.task, time_slot: block.time_slot });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingBlock) return;
+    
+    await updateDailyBlock(editingBlock, {
+      task: editData.task,
+      time_slot: editData.time_slot
+    });
+    
+    setEditingBlock(null);
+    setEditData({ task: '', time_slot: '' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingBlock(null);
+    setEditData({ task: '', time_slot: '' });
   };
 
   const handleAddBlock = async () => {
@@ -72,7 +96,10 @@ const LiveDailyTimeline = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white mb-2">🕹️ Live Daily Timeline</h2>
-            <p className="text-sm text-white/70">Current Time: {currentTimeStr}</p>
+            <p className="text-sm text-white/70 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Current Time: {currentTimeStr}
+            </p>
           </div>
           <Dialog open={isAddingBlock} onOpenChange={setIsAddingBlock}>
             <DialogTrigger asChild>
@@ -126,10 +153,10 @@ const LiveDailyTimeline = () => {
 
         {/* Current Block Highlight */}
         {currentBlock && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-purple-500/30 to-blue-500/30 border border-purple-500/50 rounded-2xl">
+          <div className="mb-6 p-4 bg-gradient-to-r from-purple-500/30 to-blue-500/30 border border-purple-500/50 rounded-2xl animate-pulse">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="text-3xl animate-pulse">{currentBlock.emoji}</div>
+                <div className="text-3xl">{currentBlock.emoji}</div>
                 <div>
                   <h3 className="text-xl font-bold text-white">NOW: {currentBlock.task}</h3>
                   <p className="text-sm text-white/70">{currentBlock.time_slot}</p>
@@ -141,7 +168,7 @@ const LiveDailyTimeline = () => {
                     onClick={() => handleCompleteBlock(currentBlock.id)}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    <Check className="w-4 h-4 mr-2" />
+                    <CheckCircle className="w-4 h-4 mr-2" />
                     Done
                   </Button>
                 )}
@@ -153,9 +180,10 @@ const LiveDailyTimeline = () => {
 
         {/* Timeline */}
         <div className="space-y-3 max-h-96 overflow-y-auto">
-          {dailyBlocks.map((block, index) => {
+          {dailyBlocks.map((block) => {
             const isActive = currentBlock?.id === block.id;
             const isPast = block.completed;
+            const isEditing = editingBlock === block.id;
             
             return (
               <div
@@ -168,45 +196,75 @@ const LiveDailyTimeline = () => {
                     : `bg-gradient-to-r ${getBlockTypeColor(block.block_type)}`
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">{block.emoji}</div>
-                    <div>
-                      <h3 className={`font-semibold ${isActive ? 'text-white' : isPast ? 'text-green-300 line-through' : 'text-white'}`}>
-                        {block.task}
-                      </h3>
-                      <p className="text-sm text-white/60">{block.time_slot}</p>
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <Input
+                      value={editData.time_slot}
+                      onChange={(e) => setEditData(prev => ({ ...prev, time_slot: e.target.value }))}
+                      className="bg-white/10 border-white/20 text-white"
+                      placeholder="Time slot"
+                    />
+                    <Input
+                      value={editData.task}
+                      onChange={(e) => setEditData(prev => ({ ...prev, task: e.target.value }))}
+                      className="bg-white/10 border-white/20 text-white"
+                      placeholder="Task"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleSaveEdit} size="sm" className="bg-green-600 hover:bg-green-700">
+                        <Save className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                      <Button onClick={handleCancelEdit} size="sm" variant="outline" className="bg-white/10 border-white/20 text-white">
+                        <X className="w-4 h-4 mr-1" />
+                        Cancel
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {isPast && <Check className="w-5 h-5 text-green-400" />}
-                    {isActive && <div className="w-2 h-2 bg-white rounded-full animate-pulse" />}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteDailyBlock(block.id)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">{block.emoji}</div>
+                      <div>
+                        <h3 className={`font-semibold ${isActive ? 'text-white' : isPast ? 'text-green-300 line-through' : 'text-white'}`}>
+                          {block.task}
+                        </h3>
+                        <p className="text-sm text-white/60">{block.time_slot}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isPast && <CheckCircle className="w-5 h-5 text-green-400" />}
+                      {isActive && <div className="w-2 h-2 bg-white rounded-full animate-pulse" />}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditBlock(block)}
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteDailyBlock(block.id)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             );
           })}
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-6 flex gap-3">
-          <Button variant="outline" className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Reset Day
-          </Button>
-          <Button className="flex-1 bg-purple-600 hover:bg-purple-700">
-            <Play className="w-4 h-4 mr-2" />
-            Start Focus
-          </Button>
-        </div>
+        {dailyBlocks.length === 0 && (
+          <div className="text-center py-8 text-white/60">
+            <Clock className="w-12 h-12 mx-auto mb-4" />
+            <p>No blocks scheduled for today. Add your first block to get started!</p>
+          </div>
+        )}
       </div>
     </div>
   );

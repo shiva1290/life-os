@@ -62,10 +62,11 @@ export const useOperatorSystem = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
 
-      // Fetch daily blocks
+      // Fetch daily blocks for current user and today
       const { data: blocksData, error: blocksError } = await supabase
         .from('daily_blocks')
         .select('*')
+        .eq('user_id', user.id)
         .eq('date', today)
         .order('time_slot');
 
@@ -76,6 +77,7 @@ export const useOperatorSystem = () => {
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('focus_sessions')
         .select('*')
+        .eq('user_id', user.id)
         .gte('created_at', today)
         .order('created_at', { ascending: false });
 
@@ -86,6 +88,7 @@ export const useOperatorSystem = () => {
       const { data: reflectionsData, error: reflectionsError } = await supabase
         .from('reflections')
         .select('*')
+        .eq('user_id', user.id)
         .eq('date', today);
 
       if (reflectionsError) throw reflectionsError;
@@ -95,6 +98,7 @@ export const useOperatorSystem = () => {
       const { data: tasksData, error: tasksError } = await supabase
         .from('project_tasks')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (tasksError) throw tasksError;
@@ -125,6 +129,12 @@ export const useOperatorSystem = () => {
 
       if (error) throw error;
       setDailyBlocks(prev => [...prev, data].sort((a, b) => a.time_slot.localeCompare(b.time_slot)));
+      
+      toast({
+        title: "Success",
+        description: "Daily block added successfully",
+      });
+      
       return data;
     } catch (error) {
       console.error('Error adding daily block:', error);
@@ -143,12 +153,18 @@ export const useOperatorSystem = () => {
       const { error } = await supabase
         .from('daily_blocks')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
       setDailyBlocks(prev => prev.map(block => 
         block.id === id ? { ...block, ...updates } : block
       ));
+      
+      toast({
+        title: "Success",
+        description: "Block updated successfully",
+      });
     } catch (error) {
       console.error('Error updating daily block:', error);
       toast({
@@ -166,10 +182,16 @@ export const useOperatorSystem = () => {
       const { error } = await supabase
         .from('daily_blocks')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
       setDailyBlocks(prev => prev.filter(block => block.id !== id));
+      
+      toast({
+        title: "Success",
+        description: "Block deleted successfully",
+      });
     } catch (error) {
       console.error('Error deleting daily block:', error);
       toast({
@@ -235,7 +257,8 @@ export const useOperatorSystem = () => {
       const { error } = await supabase
         .from('project_tasks')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
       setProjectTasks(prev => prev.map(task => 
@@ -281,8 +304,12 @@ export const useOperatorSystem = () => {
     const currentTime = now.toTimeString().slice(0, 5);
     
     return dailyBlocks.find(block => {
-      const [startHour, startMin] = block.time_slot.split('-')[0].split(':').map(Number);
-      const [endHour, endMin] = block.time_slot.split('-')[1]?.split(':').map(Number) || [startHour + 1, startMin];
+      const timeSlot = block.time_slot;
+      if (!timeSlot.includes('-')) return false;
+      
+      const [startTime, endTime] = timeSlot.split('-');
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = endTime.split(':').map(Number);
       
       const blockStart = startHour * 60 + startMin;
       const blockEnd = endHour * 60 + endMin;
@@ -320,6 +347,44 @@ export const useOperatorSystem = () => {
     }
   };
 
+  // Set up real-time subscriptions
+  useEffect(() => {
+    if (!user) return;
+
+    const channels = [
+      supabase.channel('daily-blocks-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'daily_blocks',
+          filter: `user_id=eq.${user.id}`
+        }, () => fetchData())
+        .subscribe(),
+
+      supabase.channel('focus-sessions-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'focus_sessions',
+          filter: `user_id=eq.${user.id}`
+        }, () => fetchData())
+        .subscribe(),
+
+      supabase.channel('project-tasks-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'project_tasks',
+          filter: `user_id=eq.${user.id}`
+        }, () => fetchData())
+        .subscribe()
+    ];
+
+    return () => {
+      channels.forEach(channel => supabase.removeChannel(channel));
+    };
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       fetchData();
@@ -327,10 +392,10 @@ export const useOperatorSystem = () => {
   }, [user]);
 
   useEffect(() => {
-    if (user && !loading) {
+    if (user && !loading && dailyBlocks.length === 0) {
       initializeDefaultBlocks();
     }
-  }, [user, loading]);
+  }, [user, loading, dailyBlocks.length]);
 
   return {
     dailyBlocks,
