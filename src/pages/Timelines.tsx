@@ -14,7 +14,7 @@ const Timelines = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-black via-slate-950 to-black" />
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDIpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-10" />
       
-      <div className="relative z-10 p-6 pb-24 md:pb-8 md:pt-24">
+      <div className="relative z-10 p-4 md:p-6 pb-20 md:pb-8 pt-4 md:pt-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-12 animate-slide-up">
@@ -27,11 +27,11 @@ const Timelines = () => {
           </div>
 
           <Tabs defaultValue="fitness" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border border-slate-700 mb-8">
-              <TabsTrigger value="fitness" className="data-[state=active]:bg-blue-600">
+            <TabsList className="grid w-full grid-cols-2 glass-card border border-white/10 mb-8">
+              <TabsTrigger value="fitness" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-300">
                 🏋️ Fitness Timeline
               </TabsTrigger>
-              <TabsTrigger value="career" className="data-[state=active]:bg-purple-600">
+              <TabsTrigger value="career" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
                 💼 Career Timeline
               </TabsTrigger>
             </TabsList>

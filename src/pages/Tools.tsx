@@ -16,7 +16,7 @@ const Tools = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-black via-slate-950 to-black" />
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDIpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-10" />
       
-      <div className="relative z-10 p-6 pb-24 md:pb-8 md:pt-24">
+      <div className="relative z-10 p-4 md:p-6 pb-20 md:pb-8 pt-4 md:pt-8">
         <div className="max-w-7xl mx-auto">
           {/* Enhanced Header */}
           <div className="mb-12 animate-slide-up">
@@ -57,26 +57,9 @@ const Tools = () => {
           </div>
 
           {/* Notes Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-              <div className="glass-card-intense rounded-3xl card-hover">
-                <QuickNotes />
-              </div>
-            </div>
-            <div className="animate-slide-up" style={{ animationDelay: '0.5s' }}>
-              <div className="glass-card rounded-3xl p-8 card-hover">
-                <h3 className="text-2xl font-bold gradient-text mb-6">🧠 Quick Stats</h3>
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="text-center p-6 glass-card rounded-2xl">
-                    <div className="text-4xl font-black gradient-text mb-2">85%</div>
-                    <div className="text-sm text-slate-400 font-medium">Execution Rate</div>
-                  </div>
-                  <div className="text-center p-6 glass-card rounded-2xl">
-                    <div className="text-4xl font-black gradient-text mb-2">12</div>
-                    <div className="text-sm text-slate-400 font-medium">Active Streak</div>
-                  </div>
-                </div>
-              </div>
+          <div className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
+            <div className="glass-card-intense rounded-3xl card-hover">
+              <QuickNotes />
             </div>
           </div>
         </div>

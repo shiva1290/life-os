@@ -203,7 +203,7 @@ select option {
 
 /* Button enhancements */
 button {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
 }
 
@@ -213,6 +213,16 @@ button:hover {
 
 button:active {
   transform: translateY(0);
+}
+
+/* Performance optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.animate-slide-up, .animate-float, .animate-pulse-glow {
+  will-change: transform, opacity;
 }
 
 /* Card hover effects */
@@ -250,5 +260,17 @@ p {
   
   body {
     background: #000000;
+  }
+  
+  /* Fix mobile spacing */
+  .max-w-7xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Optimize touch targets */
+  button, .cursor-pointer {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
