@@ -231,9 +231,6 @@ The app uses Supabase with the following main tables:
 - **📱 Mobile App**: Native iOS/Android applications
 - **🔌 Integrations**: Calendar, fitness tracker, and more
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -247,7 +244,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **🌐 Live Demo**: [life.shivagupta.top](https://life.shivagupta.top)
 - **🐛 Bug Reports**: [GitHub Issues](https://github.com/shiva1290/life-os/issues)
 - **💬 Discussions**: [GitHub Discussions](https://github.com/shiva1290/life-os/discussions)
-- **📧 Email**: shivagupta.j26@gmail.com
+- **📧 Email**: shivaguptaj26@gmail.com
 
 ---
 
