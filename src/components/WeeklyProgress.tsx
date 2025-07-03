@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Award } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useGuestMode } from '@/hooks/useGuestMode';
 import { supabase } from '@/integrations/supabase/client';
 
 interface WeeklyStats {
@@ -15,6 +16,7 @@ interface WeeklyStats {
 
 const WeeklyProgress = () => {
   const { user } = useAuth();
+  const { isGuestMode, guestData } = useGuestMode();
   const [stats, setStats] = useState<WeeklyStats>({
     dsaProblems: 0,
     gymSessions: 0,
@@ -26,13 +28,27 @@ const WeeklyProgress = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (isGuestMode) {
+      setGuestStats();
+    } else if (user) {
       fetchWeeklyStats();
     }
-  }, [user]);
+  }, [user, isGuestMode, guestData]);
+
+  const setGuestStats = () => {
+    setStats({
+      dsaProblems: guestData.dsaProblems.length,
+      gymSessions: guestData.gymCheckins.length,
+      completedTasks: guestData.todos.filter(t => t.completed).length,
+      focusSessions: guestData.focusSessions.length,
+      totalBlocks: guestData.dailyBlocks.length,
+      completedBlocks: guestData.dailyBlocks.filter(b => b.completed).length
+    });
+    setLoading(false);
+  };
 
   const fetchWeeklyStats = async () => {
-    if (!user) return;
+    if (!user || isGuestMode) return;
 
     try {
       const weekStart = getWeekStart(new Date());
@@ -98,9 +114,11 @@ const WeeklyProgress = () => {
 
   const getWeekStart = (date: Date) => {
     const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day;
-    return new Date(d.setDate(diff));
+    const day = d.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const diff = d.getDate() - day; // Calculate days to subtract to get to Sunday
+    const weekStart = new Date(d.setDate(diff));
+    weekStart.setHours(0, 0, 0, 0); // Start of day
+    return weekStart;
   };
 
   const getCompletionRate = () => {

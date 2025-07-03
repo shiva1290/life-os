@@ -1,9 +1,68 @@
-
 export interface TimeBlock {
   time: string;
   task: string;
   emoji: string;
   type: 'gym' | 'study' | 'college' | 'break' | 'routine';
+}
+
+/**
+ * Get current date in user's local timezone as YYYY-MM-DD string
+ * This fixes the UTC timezone bug that was causing wrong dates
+ */
+export function getLocalDateString(date?: Date): string {
+  const d = date || new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Get current date and time in user's local timezone as ISO string
+ * This preserves the timezone information unlike toISOString()
+ */
+export function getLocalDateTimeString(date?: Date): string {
+  const d = date || new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Get a date object for the start of today in user's local timezone
+ */
+export function getLocalDateStart(date?: Date): Date {
+  const d = date || new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+/**
+ * Get a date object for the end of today in user's local timezone
+ */
+export function getLocalDateEnd(date?: Date): Date {
+  const d = date || new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+}
+
+/**
+ * Check if two dates are the same day in local timezone
+ */
+export function isSameLocalDay(date1: Date, date2: Date): boolean {
+  return getLocalDateString(date1) === getLocalDateString(date2);
+}
+
+/**
+ * Get date string for a specific number of days ago
+ */
+export function getLocalDateStringDaysAgo(daysAgo: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return getLocalDateString(date);
 }
 
 export const weekdaySchedule: TimeBlock[] = [

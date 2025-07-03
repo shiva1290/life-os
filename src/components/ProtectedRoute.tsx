@@ -1,5 +1,7 @@
 
+import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useGuestMode } from '@/hooks/useGuestMode';
 import { Navigate } from 'react-router-dom';
 
 interface ProtectedRouteProps {
@@ -8,6 +10,14 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
+  const { isGuestMode, setGuestMode } = useGuestMode();
+
+  // Disable guest mode when real user signs in
+  useEffect(() => {
+    if (user && isGuestMode) {
+      setGuestMode(false);
+    }
+  }, [user, isGuestMode, setGuestMode]);
 
   if (loading) {
     return (
@@ -20,8 +30,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
+  if (!user && !isGuestMode) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

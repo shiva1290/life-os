@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useToast } from './ui/use-toast';
+import { getLocalDateString } from '@/lib/timeUtils';
 
 interface FocusSession {
   id: string;
@@ -49,12 +50,13 @@ const FocusTimer = () => {
     if (!user) return;
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
+      const tomorrow = getLocalDateString(new Date(Date.now() + 24 * 60 * 60 * 1000));
       const { data, error } = await supabase
         .from('focus_sessions')
         .select('*')
         .gte('created_at', today)
-        .lt('created_at', new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000).toISOString())
+        .lt('created_at', tomorrow)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

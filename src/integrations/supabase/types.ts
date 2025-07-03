@@ -530,3 +530,122 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
+// Database types for Supabase
+export interface DailyBlock {
+  id: string;
+  time_slot: string;
+  task: string;
+  emoji: string;
+  block_type: 'routine' | 'gym' | 'study' | 'college' | 'break';
+  is_active: boolean;
+  completed: boolean;
+  date: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Habit {
+  id: string;
+  name: string;
+  emoji: string;
+  streak: number;
+  completed_today: boolean;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
+  priority: 'low' | 'medium' | 'high';
+  category?: string;
+  due_date?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DSAProblem {
+  id: string;
+  title: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  platform: string;
+  solved: boolean;
+  date_solved?: string;
+  category?: string;
+  notes?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Note {
+  id: string;
+  content: string;
+  title?: string;
+  tags?: string[];
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FocusSession {
+  id: string;
+  duration: number;
+  task: string;
+  completed: boolean;
+  date: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface WeeklyStats {
+  id: string;
+  week_start: string;
+  gym_sessions: number;
+  study_hours: number;
+  habits_completed: number;
+  todos_completed: number;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface StreakData {
+  id: string;
+  type: 'habit' | 'gym' | 'study' | 'general';
+  count: number;
+  last_updated: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Form types
+export interface EditDailyBlockForm {
+  time_slot: string;
+  task: string;
+  emoji: string;
+}
+
+export interface NewDailyBlockForm extends EditDailyBlockForm {
+  block_type: 'routine' | 'gym' | 'study' | 'college' | 'break';
+}
+
+export interface EditDataForm {
+  task: string;
+  time_slot: string;
+}
+
+// Utility types
+export type BlockStatus = 'active' | 'completed' | 'upcoming' | 'missed';
+
+export interface TimeSlot {
+  start: number; // minutes from midnight
+  end: number;   // minutes from midnight
+}

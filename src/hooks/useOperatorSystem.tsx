@@ -1,8 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from './useAuth';
+import { useGuestMode } from './useGuestMode';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { parseTimeSlot, getCurrentTimeInMinutes, isTimeInRange } from '@/utils/timeHelpers';
+import { getLocalDateString } from '@/lib/timeUtils';
 
 interface DailyBlock {
   id: string;
@@ -30,7 +32,7 @@ interface Reflection {
   id: string;
   reflection_type: string;
   date: string;
-  content: any;
+  content: Record<string, unknown>;
   mood_score: number;
   user_id: string;
 }
@@ -48,6 +50,7 @@ interface ProjectTask {
 
 export const useOperatorSystem = () => {
   const { user } = useAuth();
+  const { isGuestMode, guestData } = useGuestMode();
   const { toast } = useToast();
   const [dailyBlocks, setDailyBlocks] = useState<DailyBlock[]>([]);
   const [focusSessions, setFocusSessions] = useState<FocusSession[]>([]);
@@ -55,12 +58,30 @@ export const useOperatorSystem = () => {
   const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Guest mode data initialization
+  useEffect(() => {
+    if (isGuestMode) {
+      setDailyBlocks(guestData.dailyBlocks.map(block => ({
+        ...block,
+        is_active: false,
+        user_id: 'guest'
+      })));
+      setFocusSessions(guestData.focusSessions.map(session => ({
+        ...session,
+        user_id: 'guest'
+      })));
+      setReflections([]);
+      setProjectTasks([]);
+      setLoading(false);
+    }
+  }, [isGuestMode, guestData]);
+
   // Fetch all data
   const fetchData = async () => {
-    if (!user) return;
+    if (!user || isGuestMode) return;
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
 
       // Fetch daily blocks for current user and today
       const { data: blocksData, error: blocksError } = await supabase
@@ -118,6 +139,20 @@ export const useOperatorSystem = () => {
 
   // Daily Blocks CRUD
   const addDailyBlock = async (block: Omit<DailyBlock, 'id' | 'user_id'>) => {
+    if (isGuestMode) {
+      const newBlock: DailyBlock = {
+        ...block,
+        id: Date.now().toString(),
+        user_id: 'guest'
+      };
+      setDailyBlocks(prev => [...prev, newBlock].sort((a, b) => a.time_slot.localeCompare(b.time_slot)));
+      toast({
+        title: "Success",
+        description: "Daily block added successfully",
+      });
+      return newBlock;
+    }
+
     if (!user) return;
 
     try {
@@ -147,6 +182,17 @@ export const useOperatorSystem = () => {
   };
 
   const updateDailyBlock = async (id: string, updates: Partial<DailyBlock>) => {
+    if (isGuestMode) {
+      setDailyBlocks(prev => prev.map(block => 
+        block.id === id ? { ...block, ...updates } : block
+      ));
+      toast({
+        title: "Success",
+        description: "Block updated successfully",
+      });
+      return;
+    }
+
     if (!user) return;
 
     try {
@@ -176,6 +222,15 @@ export const useOperatorSystem = () => {
   };
 
   const deleteDailyBlock = async (id: string) => {
+    if (isGuestMode) {
+      setDailyBlocks(prev => prev.filter(block => block.id !== id));
+      toast({
+        title: "Success",
+        description: "Block deleted successfully",
+      });
+      return;
+    }
+
     if (!user) return;
 
     try {
@@ -300,19 +355,12 @@ export const useOperatorSystem = () => {
 
   // Get current active block with improved time parsing
   const getCurrentBlock = useCallback(() => {
-    try {
-      const currentMinutes = getCurrentTimeInMinutes();
-      
-      return dailyBlocks.find(block => {
-        const timeSlot = parseTimeSlot(block.time_slot);
-        if (!timeSlot) return false;
-        
-        return isTimeInRange(currentMinutes, timeSlot.start, timeSlot.end);
-      });
-    } catch (error) {
-      console.error('Error getting current block:', error);
-      return null;
-    }
+    const currentTimeMinutes = getCurrentTimeInMinutes();
+    return dailyBlocks.find((block: DailyBlock) => {
+      const timeSlot = parseTimeSlot(block.time_slot);
+      if (!timeSlot) return false;
+      return currentTimeMinutes >= timeSlot.start && currentTimeMinutes <= timeSlot.end;
+    }) || null;
   }, [dailyBlocks]);
 
   // Initialize default daily blocks for new users
@@ -338,14 +386,14 @@ export const useOperatorSystem = () => {
         ...block,
         is_active: false,
         completed: false,
-        date: new Date().toISOString().split('T')[0]
+        date: getLocalDateString()
       });
     }
   };
 
   // Set up real-time subscriptions
   useEffect(() => {
-    if (!user) return;
+    if (!user || isGuestMode) return;
 
     const channels = [
       supabase.channel('daily-blocks-changes')
@@ -379,19 +427,24 @@ export const useOperatorSystem = () => {
     return () => {
       channels.forEach(channel => supabase.removeChannel(channel));
     };
-  }, [user]);
+  }, [user, isGuestMode]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !isGuestMode) {
       fetchData();
     }
-  }, [user]);
+  }, [user, isGuestMode]);
 
-  useEffect(() => {
-    if (user && !loading && dailyBlocks.length === 0) {
-      initializeDefaultBlocks();
-    }
-  }, [user, loading, dailyBlocks.length]);
+  // Removed auto-initialization to prevent data being repopulated after deletion
+  // useEffect(() => {
+  //   if (user && !loading && dailyBlocks.length === 0) {
+  //     initializeDefaultBlocks();
+  //   }
+  // }, [user, loading, dailyBlocks.length]);
+
+  const broadcastUpdate = (data: Record<string, unknown>) => {
+    window.dispatchEvent(new CustomEvent('operatorUpdate', { detail: data }));
+  };
 
   return {
     dailyBlocks,

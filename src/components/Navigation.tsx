@@ -1,24 +1,50 @@
-
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Target, Calendar, Wrench, LogOut, Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Target, Calendar, LogOut, Menu, X, Trash2, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useGuestMode } from '@/hooks/useGuestMode';
 import { Button } from './ui/button';
+import { DataCleanup } from '@/utils/dataCleanup';
 
 const Navigation = () => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { isGuestMode, setGuestMode } = useGuestMode();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   
   const navItems = [
-    { path: '/', icon: Home, label: 'Dashboard' },
-    { path: '/tools', icon: Wrench, label: 'Tools' },
+    { path: '/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/timelines', icon: Target, label: 'Timelines' },
     { path: '/habits', icon: Calendar, label: 'Habits' },
   ];
 
+  // Check if current user is admin
+  React.useEffect(() => {
+    const checkAdminStatus = async () => {
+      const isAdmin = await DataCleanup.isAdminUser();
+      setIsAdminUser(isAdmin);
+    };
+    
+    if (user) {
+      checkAdminStatus();
+    }
+  }, [user]);
+
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleCreateAccount = () => {
+    setGuestMode(false);
+    navigate('/auth');
+  };
+
+  const handleDataCleanup = async () => {
+    if (window.confirm('⚠️ This will clear all localStorage data. Continue?')) {
+      await DataCleanup.performFullCleanup();
+    }
   };
 
   const toggleMobileMenu = () => {
@@ -55,17 +81,41 @@ const Navigation = () => {
                   <span>{label}</span>
                 </Link>
               ))}
+              
+              {/* Admin Only - Data Cleanup */}
+              {isAdminUser && (
+                <Button
+                  onClick={handleDataCleanup}
+                  variant="ghost"
+                  size="sm"
+                  className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 border border-transparent px-3 py-2 rounded-xl font-medium transition-all duration-200 text-sm"
+                  title="Admin: Clear all data"
+                >
+                  <Trash2 size={14} />
+                </Button>
+              )}
             </div>
 
-            {/* Desktop Sign Out */}
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              className="hidden md:flex text-slate-300 hover:text-white hover:bg-red-500/10 hover:border-red-500/20 border border-transparent px-4 py-2 rounded-xl font-medium transition-all duration-200 text-sm"
-            >
-              <LogOut size={16} className="mr-1" />
-              Sign Out
-            </Button>
+            {/* Desktop Action Button */}
+            {isGuestMode ? (
+              <Button
+                onClick={handleCreateAccount}
+                variant="ghost"
+                className="hidden md:flex text-slate-300 hover:text-white hover:bg-green-500/10 hover:border-green-500/20 border border-transparent px-4 py-2 rounded-xl font-medium transition-all duration-200 text-sm"
+              >
+                <UserPlus size={16} className="mr-1" />
+                Create your own
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSignOut}
+                variant="ghost"
+                className="hidden md:flex text-slate-300 hover:text-white hover:bg-red-500/10 hover:border-red-500/20 border border-transparent px-4 py-2 rounded-xl font-medium transition-all duration-200 text-sm"
+              >
+                <LogOut size={16} className="mr-1" />
+                Sign Out
+              </Button>
+            )}
 
             {/* Mobile Menu Button */}
             <Button
@@ -97,14 +147,44 @@ const Navigation = () => {
                   <span>{label}</span>
                 </Link>
               ))}
-              <Button
-                onClick={handleSignOut}
-                variant="ghost"
-                className="flex items-center justify-start space-x-3 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-red-500/10 hover:border-red-500/20 border border-transparent font-medium transition-all duration-200 text-sm"
-              >
-                <LogOut size={18} />
-                <span>Sign Out</span>
-              </Button>
+              
+              {/* Admin Only - Mobile Data Cleanup */}
+              {isAdminUser && (
+                <Button
+                  onClick={() => {
+                    closeMobileMenu();
+                    handleDataCleanup();
+                  }}
+                  variant="ghost"
+                  className="flex items-center justify-start space-x-3 px-3 py-2 rounded-xl text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 border border-transparent font-medium transition-all duration-200 text-sm"
+                >
+                  <Trash2 size={18} />
+                  <span>Admin: Clear Data</span>
+                </Button>
+              )}
+              
+              {isGuestMode ? (
+                <Button
+                  onClick={() => {
+                    closeMobileMenu();
+                    handleCreateAccount();
+                  }}
+                  variant="ghost"
+                  className="flex items-center justify-start space-x-3 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-green-500/10 hover:border-green-500/20 border border-transparent font-medium transition-all duration-200 text-sm"
+                >
+                  <UserPlus size={18} />
+                  <span>Create your own</span>
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSignOut}
+                  variant="ghost"
+                  className="flex items-center justify-start space-x-3 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-red-500/10 hover:border-red-500/20 border border-transparent font-medium transition-all duration-200 text-sm"
+                >
+                  <LogOut size={18} />
+                  <span>Sign Out</span>
+                </Button>
+              )}
             </div>
           </div>
         )}

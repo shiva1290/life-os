@@ -1,22 +1,22 @@
-
 import React from 'react';
 import { CheckCircle, Edit, Trash2, Save, X, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { DailyBlock, EditDataForm } from '@/integrations/supabase/types';
 
 interface TimelineBlockProps {
-  block: any;
+  block: DailyBlock;
   isActive: boolean;
   isPast: boolean;
   isMissed?: boolean;
   isEditing: boolean;
-  editData: { task: string; time_slot: string };
-  onEdit: (block: any) => void;
+  editData: EditDataForm;
+  onEdit: (block: DailyBlock) => void;
   onSave: () => void;
   onCancel: () => void;
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
-  onEditDataChange: (data: { task: string; time_slot: string }) => void;
+  onEditDataChange: (data: EditDataForm) => void;
 }
 
 const TimelineBlock = ({

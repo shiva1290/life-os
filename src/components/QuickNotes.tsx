@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { StickyNote, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useGuestMode } from '@/hooks/useGuestMode';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
@@ -16,6 +17,7 @@ interface Note {
 
 const QuickNotes = () => {
   const { user } = useAuth();
+  const { isGuestMode, guestData } = useGuestMode();
   const { toast } = useToast();
   const [notes, setNotes] = useState<Note[]>([]);
   const [isAddingNote, setIsAddingNote] = useState(false);
@@ -23,13 +25,16 @@ const QuickNotes = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (isGuestMode) {
+      setNotes(guestData.notes);
+      setLoading(false);
+    } else if (user) {
       fetchNotes();
     }
-  }, [user]);
+  }, [user, isGuestMode, guestData]);
 
   const fetchNotes = async () => {
-    if (!user) return;
+    if (!user || isGuestMode) return;
 
     try {
       const { data, error } = await supabase
@@ -48,6 +53,26 @@ const QuickNotes = () => {
   };
 
   const addNote = async () => {
+    if (isGuestMode) {
+      if (!newNoteContent.trim()) return;
+      
+      const newNote: Note = {
+        id: Date.now().toString(),
+        content: newNoteContent,
+        created_at: new Date().toISOString()
+      };
+      
+      setNotes(prev => [newNote, ...prev.slice(0, 4)]);
+      setNewNoteContent('');
+      setIsAddingNote(false);
+      
+      toast({
+        title: "Success!",
+        description: "Note added successfully",
+      });
+      return;
+    }
+
     if (!user || !newNoteContent.trim()) return;
 
     try {
@@ -80,6 +105,16 @@ const QuickNotes = () => {
   };
 
   const deleteNote = async (id: string) => {
+    if (isGuestMode) {
+      setNotes(prev => prev.filter(n => n.id !== id));
+      
+      toast({
+        title: "Success!",
+        description: "Note deleted successfully",
+      });
+      return;
+    }
+
     if (!user) return;
 
     try {

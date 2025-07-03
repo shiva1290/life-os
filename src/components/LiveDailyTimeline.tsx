@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Clock, Plus, AlertCircle, CheckCircle } from 'lucide-react';
 import { useOperatorSystem } from '@/hooks/useOperatorSystem';
@@ -11,6 +10,8 @@ import TimelineBlock from './TimelineBlock';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorBoundary from './ErrorBoundary';
 import { parseTimeSlot, getCurrentTimeInMinutes } from '@/utils/timeHelpers';
+import { DailyBlock, BlockStatus } from '@/integrations/supabase/types';
+import { getLocalDateString } from '@/lib/timeUtils';
 
 const LiveDailyTimeline = () => {
   const { dailyBlocks, getCurrentBlock, updateDailyBlock, addDailyBlock, deleteDailyBlock, loading } = useOperatorSystem();
@@ -37,7 +38,7 @@ const LiveDailyTimeline = () => {
   const currentMinutes = getCurrentTimeInMinutes();
 
   // Enhanced block status detection
-  const getBlockStatus = (block: any) => {
+  const getBlockStatus = (block: DailyBlock): BlockStatus => {
     if (block.completed) return 'completed';
     if (currentBlock?.id === block.id) return 'active';
     
@@ -65,7 +66,7 @@ const LiveDailyTimeline = () => {
     }
   };
 
-  const handleEditBlock = (block: any) => {
+  const handleEditBlock = (block: DailyBlock) => {
     setEditingBlock(block.id);
     setEditData({ task: block.task, time_slot: block.time_slot });
   };
@@ -121,7 +122,7 @@ const LiveDailyTimeline = () => {
         ...newBlock,
         is_active: false,
         completed: false,
-        date: new Date().toISOString().split('T')[0]
+        date: getLocalDateString()
       });
 
       setNewBlock({ time_slot: '', task: '', emoji: '⚡', block_type: 'routine' });
@@ -254,7 +255,7 @@ const LiveDailyTimeline = () => {
           )}
 
           {/* Enhanced Timeline with Status Indicators */}
-          <div className="space-y-2 md:space-y-3 max-h-96 overflow-y-auto">
+          <div className="space-y-2 md:space-y-3 max-h-80 overflow-y-auto">
             {dailyBlocks.map((block) => {
               const blockStatus = getBlockStatus(block);
               const isActive = blockStatus === 'active';
@@ -284,9 +285,18 @@ const LiveDailyTimeline = () => {
           </div>
 
           {!loading && dailyBlocks.length === 0 && (
-            <div className="text-center py-8 text-white/60">
-              <Clock className="w-8 md:w-12 h-8 md:h-12 mx-auto mb-4" />
-              <p className="text-sm md:text-base">No blocks scheduled for today. Add your first block to get started!</p>
+            <div className="text-center py-8 text-white/60 h-80 flex flex-col justify-center">
+              <Clock className="w-12 h-12 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">No Timeline Yet</h3>
+              <p className="text-sm mb-4">Add your first block to get started!</p>
+              <div className="space-y-2 max-w-xs mx-auto">
+                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-300 text-xs">
+                  💡 Click "Add Block" above
+                </div>
+                <div className="p-2 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-300 text-xs">
+                  ⚡ Build your routine
+                </div>
+              </div>
             </div>
           )}
         </div>

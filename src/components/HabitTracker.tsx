@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar, Check, Plus, Trash2, Edit } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useGuestMode } from '@/hooks/useGuestMode';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { useToast } from './ui/use-toast';
+import { getLocalDateString } from '@/lib/timeUtils';
 
 interface Habit {
   id: string;
@@ -27,6 +28,7 @@ interface HabitCompletion {
 
 const HabitTracker = () => {
   const { user } = useAuth();
+  const { isGuestMode, guestData } = useGuestMode();
   const { toast } = useToast();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [completions, setCompletions] = useState<HabitCompletion[]>([]);
@@ -40,14 +42,29 @@ const HabitTracker = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (isGuestMode) {
+      setGuestData();
+    } else if (user) {
       fetchHabits();
       fetchCompletions();
     }
-  }, [user]);
+  }, [user, isGuestMode, guestData]);
+
+  const setGuestData = () => {
+    setHabits(guestData.habits);
+    // Simulate some completed habits for today
+    const today = getLocalDateString();
+    const guestCompletions: HabitCompletion[] = guestData.habits.slice(0, 3).map((habit, index) => ({
+      id: `guest-completion-${index}`,
+      habit_id: habit.id,
+      completed_date: today
+    }));
+    setCompletions(guestCompletions);
+    setLoading(false);
+  };
 
   const fetchHabits = async () => {
-    if (!user) return;
+    if (!user || isGuestMode) return;
 
     try {
       const { data, error } = await supabase
@@ -63,10 +80,10 @@ const HabitTracker = () => {
   };
 
   const fetchCompletions = async () => {
-    if (!user) return;
+    if (!user || isGuestMode) return;
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
       const { data, error } = await supabase
         .from('habit_completions')
         .select('*')
@@ -82,6 +99,31 @@ const HabitTracker = () => {
   };
 
   const addHabit = async () => {
+    if (isGuestMode) {
+      if (!newHabit.name) return;
+      
+      const newHabitData: Habit = {
+        id: Date.now().toString(),
+        name: newHabit.name,
+        category: newHabit.category,
+        color: newHabit.color,
+        icon: newHabit.icon,
+        current_streak: 0,
+        best_streak: 0,
+        target_frequency: 1
+      };
+      
+      setHabits(prev => [...prev, newHabitData]);
+      setNewHabit({ name: '', category: 'health', color: '#3B82F6', icon: '💪' });
+      setIsAddingHabit(false);
+      
+      toast({
+        title: "Success!",
+        description: "Habit added successfully",
+      });
+      return;
+    }
+
     if (!user || !newHabit.name) return;
 
     try {
@@ -120,9 +162,26 @@ const HabitTracker = () => {
   };
 
   const toggleHabit = async (habitId: string) => {
+    if (isGuestMode) {
+      const today = getLocalDateString();
+      const existingCompletion = completions.find(c => c.habit_id === habitId);
+
+      if (existingCompletion) {
+        setCompletions(prev => prev.filter(c => c.id !== existingCompletion.id));
+      } else {
+        const newCompletion: HabitCompletion = {
+          id: `guest-completion-${Date.now()}`,
+          habit_id: habitId,
+          completed_date: today
+        };
+        setCompletions(prev => [...prev, newCompletion]);
+      }
+      return;
+    }
+
     if (!user) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     const existingCompletion = completions.find(c => c.habit_id === habitId);
 
     try {
@@ -161,6 +220,17 @@ const HabitTracker = () => {
   };
 
   const deleteHabit = async (habitId: string) => {
+    if (isGuestMode) {
+      setHabits(prev => prev.filter(h => h.id !== habitId));
+      setCompletions(prev => prev.filter(c => c.habit_id !== habitId));
+      
+      toast({
+        title: "Success!",
+        description: "Habit deleted successfully",
+      });
+      return;
+    }
+
     if (!user) return;
 
     try {

@@ -1,13 +1,16 @@
-
-import React, { useState, useEffect } from 'react';
-import { CheckSquare, Plus, Trash2, Circle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { CheckSquare, Plus, Trash2, Circle, Calendar, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useGuestMode } from '@/hooks/useGuestMode';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useToast } from '@/hooks/use-toast';
+import GuestModePopup from './GuestModePopup';
+import { DataService } from '@/lib/dataService';
+import { getLocalDateString } from '@/lib/timeUtils';
 
 interface Todo {
   id: string;
@@ -20,8 +23,10 @@ interface Todo {
 
 const DailyTodos = () => {
   const { user } = useAuth();
+  const { isGuestMode, guestData } = useGuestMode();
   const { toast } = useToast();
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [archivedTodos, setArchivedTodos] = useState<Todo[]>([]);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
   const [newTodo, setNewTodo] = useState({
     text: '',
@@ -29,28 +34,32 @@ const DailyTodos = () => {
     category: 'study' as 'study' | 'gym' | 'personal' | 'college'
   });
   const [loading, setLoading] = useState(true);
+  const [showGuestPopup, setShowGuestPopup] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      fetchTodos();
-    }
-  }, [user]);
-
-  const fetchTodos = async () => {
-    if (!user) return;
-
+  const fetchTodos = useCallback(async () => {
+    if (!user || isGuestMode) return;
+    
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
+      const today = getLocalDateString();
+      
+      const { data: activeTodos, error: activeTodosError } = await supabase
         .from('todos')
         .select('*')
         .eq('created_date', today)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
+      const { data: completedTodos, error: completedTodosError } = await supabase
+        .from('archived_todos')
+        .select('*')
+        .eq('created_date', today)
+        .order('created_at');
+
+      if (activeTodosError) throw activeTodosError;
+      if (completedTodosError) throw completedTodosError;
+
       // Type-safe mapping from Supabase data
-      const typedTodos: Todo[] = (data || []).map(todo => ({
+      const typedTodos: Todo[] = (activeTodos || []).map(todo => ({
         id: todo.id,
         text: todo.text,
         completed: todo.completed || false,
@@ -58,16 +67,48 @@ const DailyTodos = () => {
         category: (todo.category as 'study' | 'gym' | 'personal' | 'college') || 'study',
         created_date: todo.created_date || today
       }));
+
+      const typedArchivedTodos: Todo[] = (completedTodos || []).map(todo => ({
+        id: todo.id,
+        text: todo.text,
+        completed: true,
+        priority: (todo.priority as 'high' | 'medium' | 'low') || 'medium',
+        category: (todo.category as 'study' | 'gym' | 'personal' | 'college') || 'study',
+        created_date: todo.created_date || today
+      }));
       
       setTodos(typedTodos);
+      setArchivedTodos(typedArchivedTodos);
     } catch (error) {
       console.error('Error fetching todos:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (isGuestMode) {
+      const today = getLocalDateString();
+      const dataService = DataService.getInstance();
+      dataService.checkDailyReset(user);
+      
+      const todayTodos = guestData.todos.filter(todo => todo.created_date === today);
+      const archivedGuestTodos = guestData.archivedTodos.filter(todo => todo.created_date === today);
+      
+      setTodos(todayTodos);
+      setArchivedTodos(archivedGuestTodos);
+      setLoading(false);
+    } else if (user) {
+      fetchTodos();
+    }
+  }, [user, isGuestMode, guestData, fetchTodos]);
 
   const addTodo = async () => {
+    if (isGuestMode) {
+      setShowGuestPopup(true);
+      return;
+    }
+
     if (!user || !newTodo.text.trim()) return;
 
     try {
@@ -79,7 +120,7 @@ const DailyTodos = () => {
           category: newTodo.category,
           user_id: user.id,
           completed: false,
-          created_date: new Date().toISOString().split('T')[0]
+          created_date: getLocalDateString()
         }])
         .select()
         .single();
@@ -93,7 +134,7 @@ const DailyTodos = () => {
         completed: data.completed || false,
         priority: (data.priority as 'high' | 'medium' | 'low') || 'medium',
         category: (data.category as 'study' | 'gym' | 'personal' | 'college') || 'study',
-        created_date: data.created_date || new Date().toISOString().split('T')[0]
+        created_date: data.created_date || getLocalDateString()
       };
       
       setTodos(prev => [typedTodo, ...prev]);
@@ -115,6 +156,13 @@ const DailyTodos = () => {
   };
 
   const toggleTodo = async (id: string) => {
+    if (isGuestMode) {
+      setTodos(prev => prev.map(t => 
+        t.id === id ? { ...t, completed: !t.completed } : t
+      ));
+      return;
+    }
+
     if (!user) return;
 
     const todo = todos.find(t => t.id === id);
@@ -141,6 +189,11 @@ const DailyTodos = () => {
   };
 
   const deleteTodo = async (id: string) => {
+    if (isGuestMode) {
+      setShowGuestPopup(true);
+      return;
+    }
+
     if (!user) return;
 
     try {
@@ -325,6 +378,13 @@ const DailyTodos = () => {
           </div>
         </div>
       </div>
+
+      <GuestModePopup
+        isOpen={showGuestPopup}
+        onClose={() => setShowGuestPopup(false)}
+        title="Ready to track your tasks?"
+        message="Create your account to save your daily tasks and track your progress over time!"
+      />
     </div>
   );
 };

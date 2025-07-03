@@ -1,64 +1,83 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Code, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useGuestMode } from '@/hooks/useGuestMode';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import GuestModePopup from './GuestModePopup';
+import { getLocalDateString, getLocalDateStringDaysAgo } from '@/lib/timeUtils';
+
+interface DSAProblem {
+  id: string;
+  problem_name: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  topic: string;
+  solved_date: string;
+}
 
 const DSATracker = () => {
   const { user } = useAuth();
+  const { isGuestMode, guestData } = useGuestMode();
   const { toast } = useToast();
-  const [dsaCount, setDsaCount] = useState({ today: 0, week: 0, streak: 0 });
+  const [problems, setProblems] = useState<DSAProblem[]>([]);
+  const [todayCount, setTodayCount] = useState(0);
+  const [weeklyCount, setWeeklyCount] = useState(0);
+  const [streakCount, setStreakCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showGuestPopup, setShowGuestPopup] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      fetchDSAData();
-      setupRealtimeSubscription();
+    if (isGuestMode) {
+      const today = getLocalDateString();
+      
+      // Filter problems for today and this week
+      const todayProblems = guestData.dsaProblems.filter(p => p.solved_date === today);
+      setProblems(guestData.dsaProblems);
+      setTodayCount(todayProblems.length);
+      
+      // Calculate weekly count (last 7 days)
+      const weeklyProblems = guestData.dsaProblems.filter(p => {
+        const problemDate = new Date(p.solved_date);
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return problemDate >= weekAgo;
+      });
+      setWeeklyCount(weeklyProblems.length);
+      setStreakCount(5); // Sample guest streak
+      setLoading(false);
+    } else if (user) {
+      fetchProblems();
     }
-  }, [user]);
+  }, [user, isGuestMode, guestData]);
 
-  const fetchDSAData = async () => {
-    if (!user) return;
+  const fetchProblems = async () => {
+    if (!user || isGuestMode) return;
 
     try {
-      const today = new Date().toISOString().split('T')[0];
       const weekStart = new Date();
       weekStart.setDate(weekStart.getDate() - 7);
+      const weekStartString = getLocalDateString(weekStart);
 
-      // Fetch today's problems
-      const { data: todayData, error: todayError } = await supabase
+      const { data, error } = await supabase
         .from('dsa_problems')
         .select('*')
-        .eq('user_id', user.id)
-        .eq('solved_date', today);
+        .gte('solved_date', weekStartString);
 
-      if (todayError) throw todayError;
-
-      // Fetch this week's problems
-      const { data: weekData, error: weekError } = await supabase
-        .from('dsa_problems')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('solved_date', weekStart.toISOString().split('T')[0]);
-
-      if (weekError) throw weekError;
-
+      if (error) throw error;
+      
+      const today = getLocalDateString();
+      const allProblems = data || [];
+      const todayProblems = allProblems.filter(p => p.solved_date === today);
+      
+      setProblems(allProblems);
+      setTodayCount(todayProblems.length);
+      setWeeklyCount(allProblems.length);
+      
       // Calculate streak
       const streak = await calculateDSAStreak();
-
-      setDsaCount({
-        today: todayData?.length || 0,
-        week: weekData?.length || 0,
-        streak
-      });
+      setStreakCount(streak);
     } catch (error) {
-      console.error('Error fetching DSA data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch DSA data",
-        variant: "destructive",
-      });
+      console.error('Error fetching DSA problems:', error);
     } finally {
       setLoading(false);
     }
@@ -102,7 +121,7 @@ const DSATracker = () => {
     }
   };
 
-  const setupRealtimeSubscription = () => {
+  const setupRealtimeSubscription = useCallback(() => {
     if (!user) return;
 
     const channel = supabase
@@ -113,25 +132,43 @@ const DSATracker = () => {
         table: 'dsa_problems',
         filter: `user_id=eq.${user.id}`
       }, () => {
-        fetchDSAData();
+        fetchProblems();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (isGuestMode) {
+      // Set sample guest data for DSA progress
+      setTodayCount(2);
+      setWeeklyCount(8);
+      setStreakCount(5);
+      setLoading(false);
+    } else if (user) {
+      fetchProblems();
+      setupRealtimeSubscription();
+    }
+  }, [fetchProblems, setupRealtimeSubscription, isGuestMode, user]);
 
   const addDSAProblem = async () => {
+    if (isGuestMode) {
+      setShowGuestPopup(true);
+      return;
+    }
+
     if (!user) return;
 
     try {
       const { error } = await supabase
         .from('dsa_problems')
-        .insert([{
-          problem_name: `Problem ${dsaCount.today + 1}`,
-          user_id: user.id,
-          solved_date: new Date().toISOString().split('T')[0]
+                  .insert([{
+            problem_name: `Problem ${todayCount + 1}`,
+            user_id: user.id,
+            solved_date: getLocalDateString()
         }]);
 
       if (error) throw error;
@@ -174,15 +211,15 @@ const DSATracker = () => {
       
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div className="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm">
-          <div className="text-3xl font-bold text-green-400">{dsaCount.today}</div>
+          <div className="text-3xl font-bold text-green-400">{todayCount}</div>
           <div className="text-xs text-white/70">Today</div>
         </div>
         <div className="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm">
-          <div className="text-3xl font-bold text-blue-400">{dsaCount.week}</div>
+          <div className="text-3xl font-bold text-blue-400">{weeklyCount}</div>
           <div className="text-xs text-white/70">This Week</div>
         </div>
         <div className="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm">
-          <div className="text-3xl font-bold text-orange-400">{dsaCount.streak}</div>
+          <div className="text-3xl font-bold text-orange-400">{streakCount}</div>
           <div className="text-xs text-white/70">Day Streak</div>
         </div>
       </div>
@@ -194,6 +231,13 @@ const DSATracker = () => {
         <TrendingUp className="w-5 h-5" />
         + Solved a Problem
       </button>
+
+      <GuestModePopup
+        isOpen={showGuestPopup}
+        onClose={() => setShowGuestPopup(false)}
+        title="Track your coding journey!"
+        message="Create your account to track your DSA progress and maintain your problem-solving streak!"
+      />
     </div>
   );
 };
